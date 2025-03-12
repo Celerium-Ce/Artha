@@ -1,22 +1,13 @@
-import React from 'react';
+import Link from "next/link";
 
-const LoginPage = () => {
-    return (
-        <div>
-            <h1>Login Page</h1>
-            <form>
-                <div>
-                    <label htmlFor="email">Email:</label>
-                    <input type="email" id="email" name="email" required />
-                </div>
-                <div>
-                    <label htmlFor="password">Password:</label>
-                    <input type="password" id="password" name="password" required />
-                </div>
-                <button type="submit">Login</button>
-            </form>
-        </div>
-    );
-};
-
-export default LoginPage;
+export default function Home() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
+      <h1 className="text-4xl font-bold">🏠 Home Page</h1>
+      <p className="mt-4">Welcome! Please sign in.</p>
+      <Link href="/login">
+        <button className="mt-6 p-3 bg-blue-500 rounded">Go to Login</button>
+      </Link>
+    </div>
+  );
+}
