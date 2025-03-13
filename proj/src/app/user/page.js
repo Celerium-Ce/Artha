@@ -4,6 +4,7 @@ import { useAuth } from "../../context/useAuth";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import LogoutButton from "../components/logoutButton";
+import { toast, ToastContainer } from "react-toastify";
 
 export default function Dashboard() {
     const { user, loading } = useAuth();
@@ -27,7 +28,8 @@ export default function Dashboard() {
             console.error("Error sending password reset email:", error.message);
             return;
         }
-        alert("Password reset email sent!");
+        toast.success("Password reset email sent!");
+        
     };
 
     useEffect(() => {
@@ -86,6 +88,7 @@ export default function Dashboard() {
                     
                 </div>
             </div>
+            <ToastContainer/>
         </div>
     );
 }

@@ -34,7 +34,7 @@ export default function Login() {
       setError(error.message);
     } else {
       Cookies.set("supabase-session", JSON.stringify(data.session), { expires: 7 });
-      router.push("/dashboard"); // Redirect to dashboard
+      router.push("/user"); // Redirect to user
     }
     setLoading(false);
     setLoading(false);
@@ -42,7 +42,7 @@ export default function Login() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-white text-black">
-      <div className="w-full max-w-md bg-gray-100 p-6 rounded-lg shadow-md">
+      <div className="w-full max-w-md border-1 border-black-500 bg-gray-100 p-6 rounded-lg shadow-md">
         <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
 
         {error && <p className="text-red-500 text-center">{error}</p>}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
-import { toast } from "react-toastify";
+import { toast,ToastContainer } from "react-toastify";
 export default function Register() {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -50,7 +50,9 @@ export default function Register() {
       return;
         } else {
       toast.success("Check your email to confirm your account!!!!");
-      router.push("/auth"); // Redirect to login
+      setTimeout(() => {
+        router.push("/auth"); // Redirect to login after 3 seconds
+      }, 3000);
     }
     console.log("Signing up user...");
 
@@ -127,6 +129,7 @@ export default function Register() {
           </a>
         </p>
       </div>
+      <ToastContainer />
     </div>
   );
 }
