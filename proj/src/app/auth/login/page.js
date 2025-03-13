@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
+import Cookies from "js-cookie";
 
 export default function Login() {
   const router = useRouter();
@@ -32,15 +33,16 @@ export default function Login() {
     if (error) {
       setError(error.message);
     } else {
-      alert("Login successful!");
-      router.push("/dashboard"); // Redirect user after login
+      Cookies.set("supabase-session", JSON.stringify(data.session), { expires: 7 });
+      router.push("/dashboard"); // Redirect to dashboard
     }
+    setLoading(false);
     setLoading(false);
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black text-white">
-      <div className="w-full max-w-md bg-gray-900 p-6 rounded-lg shadow-md">
+    <div className="flex min-h-screen items-center justify-center bg-white text-black">
+      <div className="w-full max-w-md bg-gray-100 p-6 rounded-lg shadow-md">
         <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
 
         {error && <p className="text-red-500 text-center">{error}</p>}
@@ -52,7 +54,7 @@ export default function Login() {
             placeholder="Email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg bg-gray-800 text-white"
+            className="w-full px-3 py-2 rounded-lg bg-white text-black"
             required
           />
 
@@ -62,7 +64,7 @@ export default function Login() {
             placeholder="Password"
             value={formData.password}
             onChange={handleChange}
-            className="w-full px-3 py-2 border rounded-lg bg-gray-800 text-white"
+            className="w-full px-3 py-2 rounded-lg bg-white text-black"
             required
           />
 
@@ -76,7 +78,7 @@ export default function Login() {
         </form>
 
         <p className="text-center mt-4">
-          Don't have an account? <a href="/auth/register" className="text-blue-500">Register</a>
+          Dont have an account? <a href="/auth/register" className="text-blue-500">Register</a>
         </p>
       </div>
     </div>
