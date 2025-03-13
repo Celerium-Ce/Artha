@@ -2,6 +2,7 @@
 
 import { useState, useEffect, createContext, useContext } from "react";
 import { supabase } from "../lib/supabaseClient";
+import Cookies from "js-cookie"; // Import js-cookie
 
 // Create Authentication Context
 const AuthContext = createContext(null);
@@ -11,10 +12,23 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch session on component mount
+    // Check if session exists in cookies
+    const storedSession = Cookies.get("supabase-session");
+    if (storedSession) {
+      const session = JSON.parse(storedSession);
+      setUser(session?.user || null);
+    }
+
     const fetchUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
+
+      if (session) {
+        setUser(session.user);
+        Cookies.set("supabase-session", JSON.stringify(session), { expires: 7 });
+      } else {
+        setUser(null);
+        Cookies.remove("supabase-session");
+      }
       setLoading(false);
     };
 
@@ -22,7 +36,13 @@ export function AuthProvider({ children }) {
 
     // Listen for authentication state changes
     const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user || null);
+      if (session) {
+        setUser(session.user);
+        Cookies.set("supabase-session", JSON.stringify(session), { expires: 7 });
+      } else {
+        setUser(null);
+        Cookies.remove("supabase-session");
+      }
     });
 
     return () => authListener.subscription.unsubscribe();
