@@ -9,6 +9,8 @@ export default function TransactionsPage() {
   const [accountID, setAccountID] = useState("");
   const [timestamp, setTimestamp] = useState("");
   const [message, setMessage] = useState("");
+  const [viewSection, setViewSection] = useState("add"); // State to track the current section
+  const [deletingTxnId, setDeletingTxnId] = useState(null); // State to track the transaction to delete
 
   // Fetch the transactions when the component mounts
   useEffect(() => {
@@ -49,7 +51,6 @@ export default function TransactionsPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        // If response status is not OK (>= 400)
         console.error("Error adding transaction:", data.error || "Unknown error");
         setMessage("Failed to add transaction.");
       } else {
@@ -67,86 +68,129 @@ export default function TransactionsPage() {
     }
   };
 
+  // Handle deleting a transaction
+  const handleDeleteTransaction = async (txnId) => {
+    const confirmed = window.confirm("Are you sure you want to delete this transaction?");
+    if (!confirmed) return;
+
+    try {
+        const res = await fetch(`/api/transactions?txnid=${txnId}`, {
+            method: "DELETE",
+          });
+
+      if (res.ok) {
+        // Remove the deleted transaction from the state
+        setTransactions(transactions.filter((txn) => txn.txnid !== txnId));
+        setMessage("Transaction deleted successfully!");
+      } else {
+        const data = await res.json();
+        setMessage(data.error || "Failed to delete transaction.");
+      }
+    } catch (error) {
+      console.error("Error deleting transaction:", error);
+      setMessage("Failed to delete transaction.");
+    }
+  };
+
   return (
     <div className="container">
       <h1 className="title">Transactions</h1>
 
-      {/* Add Transaction Form */}
-      <div className="transaction-form">
-        <h2>Add Transaction</h2>
-        <form onSubmit={handleAddTransaction}>
-          <input
-            type="number"
-            placeholder="Amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            required
-          />
-          <input
-            type="text"
-            placeholder="Category ID"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            required
-          />
-          <select value={type} onChange={(e) => setType(e.target.value)} required>
-            <option value="debit">Debit</option>
-            <option value="credit">Credit</option>
-          </select>
-          <input
-            type="number"
-            placeholder="Account ID"
-            value={accountID}
-            onChange={(e) => setAccountID(e.target.value)}
-            required
-          />
-          <input
-            type="datetime-local"
-            value={timestamp}
-            onChange={(e) => setTimestamp(e.target.value)}
-          />
-          <button type="submit">Add Transaction</button>
-        </form>
-        {message && <p>{message}</p>}
+      {/* Buttons to toggle between Add and View sections */}
+      <div className="toggle-buttons">
+        <button onClick={() => setViewSection("add")}>Add Transaction</button>
+        <button onClick={() => setViewSection("view")}>View Transactions</button>
       </div>
 
-      {/* Transactions List */}
-      <div className="transactions-list">
-        {transactions.length === 0 ? (
-          <p>No transactions found.</p>
-        ) : (
-          transactions.map((transaction) => {
-            if (!transaction || !transaction.txnid) {
-              return null; // Skip rendering this item if txnid is missing
-            }
-            return (
-              <div key={transaction.txnid} className="transaction-card">
-                <div className="transaction-header">
-                  <span className="transaction-id">TXN #{transaction.txnid}</span>
-                  <span
-                    className={`transaction-type ${transaction.credit_debit.toLowerCase()}`}
-                  >
-                    {transaction.credit_debit.toUpperCase()}
-                  </span>
-                </div>
+      {/* Conditionally render the sections based on viewSection state */}
+      {viewSection === "add" && (
+        <div className="section">
+          <div className="transaction-form">
+            <h2>Add Transaction</h2>
+            <form onSubmit={handleAddTransaction}>
+              <input
+                type="number"
+                placeholder="Amount"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                required
+              />
+              <input
+                type="text"
+                placeholder="Category ID"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                required
+              />
+              <select value={type} onChange={(e) => setType(e.target.value)} required>
+                <option value="debit">Debit</option>
+                <option value="credit">Credit</option>
+              </select>
+              <input
+                type="number"
+                placeholder="Account ID"
+                value={accountID}
+                onChange={(e) => setAccountID(e.target.value)}
+                required
+              />
+              <input
+                type="datetime-local"
+                value={timestamp}
+                onChange={(e) => setTimestamp(e.target.value)}
+              />
+              <button type="submit">Add Transaction</button>
+            </form>
+            {message && <p>{message}</p>}
+          </div>
+        </div>
+      )}
 
-                <div className="transaction-body">
-                  <div className="amount">
-                    <strong>Amount: </strong>${transaction.amount}
+      {viewSection === "view" && (
+        <div className="section">
+          <div className="transactions-list">
+            {transactions.length === 0 ? (
+              <p>No transactions found.</p>
+            ) : (
+              transactions.map((transaction) => {
+                if (!transaction || !transaction.txnid) {
+                  return null; // Skip rendering this item if txnid is missing
+                }
+                return (
+                  <div key={transaction.txnid} className="transaction-card">
+                    <div className="transaction-header">
+                      <span className="transaction-id">TXN #{transaction.txnid}</span>
+                      <span
+                        className={`transaction-type ${transaction.credit_debit.toLowerCase()}`}
+                      >
+                        {transaction.credit_debit.toUpperCase()}
+                      </span>
+                      <button
+                        onClick={() => handleDeleteTransaction(transaction.txnid)}
+                        className="delete-btn"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+
+                    <div className="transaction-body">
+                      <div className="amount">
+                        <strong>Amount: </strong>${transaction.amount}
+                      </div>
+                      <div className="category">
+                        <strong>Category: </strong>{transaction.catid}
+                      </div>
+                      <div className="timestamp">
+                        <strong>Date: </strong>
+                        {new Date(transaction.timestamp).toLocaleString()}
+                      </div>
+                    </div>
                   </div>
-                  <div className="category">
-                    <strong>Category: </strong>{transaction.catid}
-                  </div>
-                  <div className="timestamp">
-                    <strong>Date: </strong>
-                    {new Date(transaction.timestamp).toLocaleString()}
-                  </div>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .container {
@@ -160,6 +204,30 @@ export default function TransactionsPage() {
           font-size: 2.5rem;
           color: #333;
           margin-bottom: 30px;
+        }
+
+        .toggle-buttons {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 20px;
+        }
+
+        .toggle-buttons button {
+          margin: 0 10px;
+          padding: 10px 20px;
+          background-color: #4caf50;
+          color: white;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+        }
+
+        .toggle-buttons button:hover {
+          background-color: #45a049;
+        }
+
+        .section {
+          margin-bottom: 50px;
         }
 
         .transaction-form {
@@ -254,6 +322,18 @@ export default function TransactionsPage() {
         .category strong,
         .timestamp strong {
           color: #333;
+        }
+
+        .delete-btn {
+          background: none;
+          border: none;
+          color: red;
+          font-size: 1.5rem;
+          cursor: pointer;
+        }
+
+        .delete-btn:hover {
+          color: #d9534f;
         }
 
         @media (max-width: 768px) {
