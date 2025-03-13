@@ -86,3 +86,42 @@ export async function DELETE(request) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
   }
 }
+
+// Handle PUT requests to update an existing transaction
+export async function PUT(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const txnid = searchParams.get("txnid");
+
+    // Check if txnid is provided
+    if (!txnid) {
+      return new Response(JSON.stringify({ error: "Transaction ID (txnid) is required" }), { status: 400 });
+    }
+
+    const updatedTransaction = await request.json(); // Get the updated transaction data
+
+    const { data, error } = await supabase
+      .from("Transaction")
+      .update({
+        amount: updatedTransaction.amount,
+        catid: updatedTransaction.catid,
+        credit_debit: updatedTransaction.credit_debit,
+        accountid: updatedTransaction.accountid,
+        timestamp: updatedTransaction.timestamp || new Date().toISOString(),
+      })
+      .eq("txnid", txnid)
+      .single();
+
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    }
+
+    if (!data) {
+      return new Response(JSON.stringify({ error: "Transaction not found" }), { status: 404 });
+    }
+
+    return new Response(JSON.stringify(data), { status: 200 });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  }
+}

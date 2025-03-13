@@ -11,6 +11,7 @@ export default function TransactionsPage() {
   const [message, setMessage] = useState("");
   const [viewSection, setViewSection] = useState("add"); // State to track the current section
   const [deletingTxnId, setDeletingTxnId] = useState(null); // State to track the transaction to delete
+  const [editingTxnId, setEditingTxnId] = useState(null); // State to track the transaction to edit
 
   // Fetch the transactions when the component mounts
   useEffect(() => {
@@ -92,6 +93,69 @@ export default function TransactionsPage() {
     }
   };
 
+  // Handle editing a transaction
+  const handleEditTransaction = async (txnId) => {
+    const confirmed = window.confirm("Are you sure you want to edit this transaction?");
+    if (!confirmed) return;
+
+    const transactionToEdit = transactions.find((txn) => txn.txnid === txnId);
+    setAmount(transactionToEdit.amount);
+    setCategory(transactionToEdit.catid);
+    setType(transactionToEdit.credit_debit);
+    setAccountID(transactionToEdit.accountid);
+    setTimestamp(transactionToEdit.timestamp);
+    setEditingTxnId(txnId); // Set the transaction to be edited
+    setViewSection("add"); // Switch to add section to edit
+  };
+
+  // Handle saving the edited transaction
+  // Handle saving the edited transaction
+const handleSaveEdit = async (e) => {
+    e.preventDefault();
+  
+    const updatedTransaction = {
+      amount: parseInt(amount),
+      catid: parseInt(category),
+      credit_debit: type,
+      accountid: parseInt(accountID),
+      timestamp: timestamp || new Date().toISOString(),
+    };
+  
+    try {
+      const res = await fetch(`/api/transactions?txnid=${editingTxnId}`, {
+        method: "PUT", // Assuming you'll use PUT to update the transaction
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedTransaction),
+      });
+  
+      if (res.ok) {
+        // No need to parse the response if it does not return any JSON
+        setTransactions(
+          transactions.map((txn) =>
+            txn.txnid === editingTxnId ? { ...txn, ...updatedTransaction } : txn
+          )
+        );
+        setEditingTxnId(null); // Reset edit state
+        setAmount("");
+        setCategory("");
+        setAccountID("");
+        setType("debit");
+        setTimestamp("");
+        setMessage("Transaction edited successfully!");
+        setViewSection("view"); // Switch back to the view section
+      } else {
+        // If the response is not OK, handle the error
+        console.error("Error editing transaction:", await res.text());
+        setMessage("Failed to edit transaction.");
+      }
+    } catch (error) {
+      console.error("Error editing transaction:", error);
+      setMessage("Failed to edit transaction.");
+    }
+  };
+  
   return (
     <div className="container">
       <h1 className="title">Transactions</h1>
@@ -106,8 +170,8 @@ export default function TransactionsPage() {
       {viewSection === "add" && (
         <div className="section">
           <div className="transaction-form">
-            <h2>Add Transaction</h2>
-            <form onSubmit={handleAddTransaction}>
+            <h2>{editingTxnId ? "Edit Transaction" : "Add Transaction"}</h2>
+            <form onSubmit={editingTxnId ? handleSaveEdit : handleAddTransaction}>
               <input
                 type="number"
                 placeholder="Amount"
@@ -138,7 +202,7 @@ export default function TransactionsPage() {
                 value={timestamp}
                 onChange={(e) => setTimestamp(e.target.value)}
               />
-              <button type="submit">Add Transaction</button>
+              <button type="submit">{editingTxnId ? "Save Changes" : "Add Transaction"}</button>
             </form>
             {message && <p>{message}</p>}
           </div>
@@ -164,6 +228,12 @@ export default function TransactionsPage() {
                       >
                         {transaction.credit_debit.toUpperCase()}
                       </span>
+                      <button
+                        onClick={() => handleEditTransaction(transaction.txnid)}
+                        className="edit-btn"
+                      >
+                        ✏️
+                      </button>
                       <button
                         onClick={() => handleDeleteTransaction(transaction.txnid)}
                         className="delete-btn"
@@ -193,6 +263,7 @@ export default function TransactionsPage() {
       )}
 
       <style jsx>{`
+        /* Styling */
         .container {
           max-width: 1200px;
           margin: 0 auto;
@@ -232,6 +303,9 @@ export default function TransactionsPage() {
 
         .transaction-form {
           margin-bottom: 30px;
+          display: flex;
+          flex-direction: column;
+          gap: 15px;
         }
 
         .transaction-form input,
@@ -239,7 +313,7 @@ export default function TransactionsPage() {
         .transaction-form button {
           width: 100%;
           padding: 10px;
-          margin: 10px 0;
+          margin: 5px 0;
           border: 1px solid #ccc;
           border-radius: 5px;
         }
@@ -324,25 +398,26 @@ export default function TransactionsPage() {
           color: #333;
         }
 
+        .edit-btn,
         .delete-btn {
           background: none;
           border: none;
-          color: red;
           font-size: 1.5rem;
           cursor: pointer;
         }
 
+        .edit-btn:hover,
         .delete-btn:hover {
           color: #d9534f;
+        }
+
+        .edit-btn {
+          color: #007bff;
         }
 
         @media (max-width: 768px) {
           .transaction-card {
             padding: 15px;
-          }
-
-          .title {
-            font-size: 2rem;
           }
         }
       `}</style>
