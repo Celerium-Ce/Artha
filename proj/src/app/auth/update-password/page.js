@@ -18,7 +18,8 @@ export default function UpdatePassword() {
       setMessage(error.message);
     } else {
       setMessage("Password updated successfully! Redirecting...");
-      setTimeout(() => router.push("/login"), 3000);
+      await supabase.auth.signOut();
+      setTimeout(() => router.push("/auth/login"), 3000);
     }
   };
 

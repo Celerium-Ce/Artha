@@ -19,6 +19,17 @@ export default function Dashboard() {
         setUserData(data[0]); 
     };
 
+    const handleChangePassword = async () => {
+        const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+              redirectTo: "http://localhost:3000/auth/update-password", // Change for production
+            });
+        if (error) {
+            console.error("Error sending password reset email:", error.message);
+            return;
+        }
+        alert("Password reset email sent!");
+    };
+
     useEffect(() => {
         if (user) {
             getData();
@@ -38,7 +49,24 @@ export default function Dashboard() {
                         <LogoutButton />
                     </div>
                     
+                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md mb-6">
+                        <p className="text-lg text-gray-700">
+                            <span className="font-semibold">Your Email:</span> {userData.email || 'Not set'} 
+                        </p>
+                        <button className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md">Change Email</button>
+                    </div>
                     
+                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md mb-6">
+                        <p className="text-lg text-gray-700">
+                            <span className="font-semibold">Password:</span> ********
+                        </p>
+                        <button 
+                            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md"
+                            onClick={handleChangePassword}
+                        >
+                            Change Password
+                        </button>
+                    </div>
                     
                 </div>
             </div>
