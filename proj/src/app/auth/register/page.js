@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
-
+import { toast } from "react-toastify";
 export default function Register() {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -45,8 +45,11 @@ export default function Register() {
 
     if (error) {
       setError(error.message);
-    } else {
-      alert("Check your email to confirm your account!");
+      toast.error(error.message);
+      setLoading(false);
+      return;
+        } else {
+      toast.success("Check your email to confirm your account!!!!");
       router.push("/auth"); // Redirect to login
     }
     console.log("Signing up user...");

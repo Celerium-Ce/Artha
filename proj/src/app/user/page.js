@@ -67,6 +67,22 @@ export default function Dashboard() {
                             Change Password
                         </button>
                     </div>
+
+                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md mb-6">
+                        <button className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md">Toggle Dark/Light Theme</button>
+                    </div>
+
+                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md mb-6">
+                        <select className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md">
+                            <option>Change Language (Show current language later)</option>
+                        </select>
+                    </div>
+
+                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md mb-6">
+                        <select className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md">
+                            <option>Change Currency (Show current currency later)</option> 
+                        </select>
+                    </div>
                     
                 </div>
             </div>

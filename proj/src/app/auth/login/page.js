@@ -76,10 +76,13 @@ export default function Login() {
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-
+        <p className="text-center mt-4">
+          <a href="/auth/reset-request" className="text-blue-500">Forgot password?</a>
+        </p>
         <p className="text-center mt-4">
           Dont have an account? <a href="/auth/register" className="text-blue-500">Register</a>
         </p>
+        
       </div>
     </div>
   );
