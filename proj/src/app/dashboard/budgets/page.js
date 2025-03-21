@@ -1,66 +1,8 @@
 "use client"
 import { supabase } from '@/lib/supabaseClient';
 
-// export async function getBudgets() {
-//     const { data, error } = await supabase.from('Budget').select('*');
-  
-//     if (error) {
-//       console.error('Error fetching budgets:', error);
-//       return null;
-//     }
-  
-//     return data;
-// }
-
-// ////
-
-
-// import { useEffect, useState } from 'react';
-// import { getBudgets } from '../utils/budgetAPI'; // Adjust path if needed
-
-// export default function BudgetList() {
-//   const [budgets, setBudgets] = useState([]);
-
-//   useEffect(() => {
-//     async function fetchBudgets() {
-//       const data = await getBudgets();
-//       if (data) setBudgets(data);
-//     }
-//     fetchBudgets();
-//   }, []);
-
-//   return (
-//     <div>
-//       <h2>Budgets</h2>
-//       <ul>
-//         {budgets.map((budget) => (
-//           <li key={budget.budgetID}>
-//             Budget ID: {budget.budgetID}, Target: {budget.targetAmount}
-//           </li>
-//         ))}
-//       </ul>
-//     </div>
-//   );
-// }
-
-
-
-// export async function addBudget(accountID, startDate, endDate, targetAmount, catID) {
-//     const { data, error } = await supabase.from('Budget').insert([
-//       { accountID, startDate, endDate, targetAmount, catID }
-//     ]);
-  
-//     if (error) {
-//       console.error('Error inserting budget:', error);
-//       return null;
-//     }
-  
-//     return data;
-// }
-
-
-
-import { useEffect } from 'react';
+import { useEffect, useState } from "react";
+import './budget.css';
 
 function FetchBudgets() {
   useEffect(() => {
@@ -79,6 +21,51 @@ function FetchBudgets() {
 
   return <h2>Check the console for budget data</h2>;
 }
+function BudgetTable() {
+  const [budgets, setBudgets] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/budgets")
+      .then((res) => res.json())
+      .then((data) => setBudgets(data))
+      .catch((err) => console.error("Error fetching budgets:", err));
+  }, []);
+
+  return (
+    <div className="p-4">
+      <h2 className="text-xl font-semibold mb-4">Budget Overview {budgets.length}</h2>
+      {budgets.length > 0 ? (
+        <table className="min-w-full border border-gray-300 bg-white shadow-md rounded-lg">
+          <thead>
+            <tr className="bg-gray-100 border-b">
+              <th className="p-2 border-r">Category ID</th>
+              <th className="p-2 border-r">Start Date</th>
+              <th className="p-2 border-r">End Date</th>
+              <th className="p-2">Target Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {budgets.map((budget) => (
+              <tr key={budget.budgetID} className="border-b hover:bg-gray-50">
+                <td className="p-2 border-r text-center">{budget.catID}</td>
+                <td className="p-2 border-r text-center">
+                  {new Date(budget.startDate).toISOString().split("T")[0]}
+                </td>
+                <td className="p-2 border-r text-center">
+                  {new Date(budget.endDate).toISOString().split("T")[0]}
+                </td>
+                <td className="p-2 text-center">${budget.targetAmount}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p>Loading budgets...</p>
+      )}
+    </div>
+  );
+}
+
 
 function PrintData(){
     return (
@@ -88,157 +75,44 @@ function PrintData(){
     );
 }
 
-export default PrintData;
+// export default PrintData;
 
+function toggleMenu(){
+  console.log("Navigation menu opened");
+  alert("Nav");
+}
 
+function Header(){
+  return (
+    <header className="header">
+      {/* <div className="menu-icon" onClick={toggleMenu}>☰</div> */}
 
-//////////
+      <div className="nav-left">
+        <a href="#">Home</a>
+        <a href="#">About</a>
+        <a href="#">Services</a>
+      </div>
 
+      <div className="search-bar">
+          <input type="text" placeholder="Search..." />
+      </div>
 
+      <div className="nav-right">
+          <a href="#">Add</a>
+          <a href="#">Login</a>
+      </div>
 
+    </header>
+  );
+}
 
+function BudgetPage(){
+  return (
+    <>
+      <Header />
+      <BudgetTable />
+    </>
+  );
+}
 
-
-
-
-
-
-
-
-// // "use client";
-
-// // import React, { useState } from 'react';
-
-// // const BudgetPage = () => {
-// //     const [amount, setAmount] = useState(100);
-
-// //     return (
-// //         <div className="container">
-// //             <h2>Currency Converter</h2>
-// //             <form>
-// //                 <div className="amount">
-// //                     <p>Enter Amount</p>
-// //                     <input 
-// //                         value={amount} 
-// //                         onChange={(e) => setAmount(e.target.value)} 
-// //                         type="text" 
-// //                     />
-// //                 </div>
-// //                 <div className="dropdown">
-// //                     <div className="from">
-// //                         <p>From</p>
-// //                         <div className="selectContainer">
-// //                             <img src="https://flagsapi.com/US/flat/64.png" alt="From Country" />
-// //                             <select name="From"></select>
-// //                         </div>
-// //                     </div>
-// //                     <i className="fa-solid fa-arrow-right-arrow-left"></i>
-// //                     <div className="to">
-// //                         <p>To</p>
-// //                         <div className="selectContainer">
-// //                             <img src="https://flagsapi.com/IN/flat/64.png" alt="To Country" />
-// //                             <select name="To"></select>
-// //                         </div>
-// //                     </div>
-// //                 </div>
-// //                 <div className="msg">
-// //                     <p id="result">Input your query</p>
-// //                 </div>
-// //                 <button type="button" id="btn">Get Exchange Rate</button>
-// //             </form>
-// //         </div>
-// //     );
-// // };
-
-// // export default BudgetPage;
-
-// "use client";
-
-// import React, { useState } from "react";
-
-// const BudgetPage = () => {
-//     const [budgets, setBudgets] = useState([]);
-//     const [savingsGoals, setSavingsGoals] = useState([]);
-//     const [category, setCategory] = useState("food");
-//     const [budgetAmount, setBudgetAmount] = useState(0);
-//     const [spentAmount, setSpentAmount] = useState(0);
-//     const [goalAmount, setGoalAmount] = useState(0);
-//     const [deadline, setDeadline] = useState("");
-
-//     const addBudget = () => {
-//         const newBudget = { category, budgetAmount, spentAmount };
-//         setBudgets([...budgets, newBudget]);
-//     };
-
-//     const addSavingsGoal = () => {
-//         const newGoal = { goalAmount, deadline, saved: 0 };
-//         setSavingsGoals([...savingsGoals, newGoal]);
-//     };
-
-//     return (
-//         <div className="min-h-screen bg-gray-100 p-6">
-//             <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
-//                 <h2 className="text-xl font-bold mb-4">Budget & Savings Goals Management</h2>
-                
-//                 {/* Budget Section */}
-//                 <div className="mb-6">
-//                     <h3 className="text-lg font-semibold">Set Your Budget</h3>
-//                     <label className="block mt-2">Category:</label>
-//                     <select className="w-full border p-2 rounded" onChange={(e) => setCategory(e.target.value)}>
-//                         <option value="food">Food</option>
-//                         <option value="entertainment">Entertainment</option>
-//                         <option value="transport">Transport</option>
-//                     </select>
-                    
-//                     <label className="block mt-2">Budget Amount ($):</label>
-//                     <input type="number" className="w-full border p-2 rounded" onChange={(e) => setBudgetAmount(parseFloat(e.target.value))} />
-                    
-//                     <label className="block mt-2">Amount Spent ($):</label>
-//                     <input type="number" className="w-full border p-2 rounded" onChange={(e) => setSpentAmount(parseFloat(e.target.value))} />
-                    
-//                     <button onClick={addBudget} className="mt-3 bg-blue-500 text-white py-2 px-4 rounded">Set Budget</button>
-//                 </div>
-                
-//                 {/* Display Budgets */}
-//                 {budgets.map((b, index) => {
-//                     const progress = (b.spentAmount / b.budgetAmount) * 100;
-//                     return (
-//                         <div key={index} className="mt-4 p-4 bg-gray-200 rounded">
-//                             <p><strong>{b.category}</strong> - Budget: ${b.budgetAmount}, Spent: ${b.spentAmount}</p>
-//                             <div className="w-full bg-gray-300 rounded h-5">
-//                                 <div className={`h-5 ${progress > 100 ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${Math.min(progress, 100)}%` }}></div>
-//                             </div>
-//                             {progress > 100 && <p className="text-red-500 font-bold">⚠️ Budget exceeded!</p>}
-//                         </div>
-//                     );
-//                 })}
-                
-//                 {/* Savings Goal Section */}
-//                 <div className="mt-6">
-//                     <h3 className="text-lg font-semibold">Set Savings Goal</h3>
-//                     <label className="block mt-2">Target Amount ($):</label>
-//                     <input type="number" className="w-full border p-2 rounded" onChange={(e) => setGoalAmount(parseFloat(e.target.value))} />
-                    
-//                     <label className="block mt-2">Deadline:</label>
-//                     <input type="date" className="w-full border p-2 rounded" onChange={(e) => setDeadline(e.target.value)} />
-                    
-//                     <button onClick={addSavingsGoal} className="mt-3 bg-green-500 text-white py-2 px-4 rounded">Save Goal</button>
-//                 </div>
-                
-//                 {/* Display Savings Goals */}
-//                 {savingsGoals.map((goal, index) => {
-//                     return (
-//                         <div key={index} className="mt-4 p-4 bg-gray-200 rounded">
-//                             <p><strong>Goal:</strong> Save ${goal.goalAmount} by {goal.deadline}</p>
-//                             <div className="w-full bg-gray-300 rounded h-5">
-//                                 <div className="h-5 bg-blue-500" style={{ width: "50%" }}></div>
-//                             </div>
-//                         </div>
-//                     );
-//                 })}
-//             </div>
-//         </div>
-//     );
-// };
-
-// // export default BudgetPage;
+export default BudgetPage;
