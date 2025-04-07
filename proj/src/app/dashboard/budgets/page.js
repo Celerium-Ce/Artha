@@ -23,56 +23,59 @@ function FetchBudgets() {
 }
 function BudgetTable() {
   const [budgets, setBudgets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const accountId = 1;
 
   useEffect(() => {
-    fetch("/api/budgets")
-      .then((res) => res.json())
-      .then((data) => setBudgets(data))
-      .catch((err) => console.error("Error fetching budgets:", err));
+    async function fetchBudgets() {
+      const { data, error } = await supabase.rpc("get_budget_by_account", { _accountid: accountId });
+      if (error) {
+        console.error("Error fetching budgets:", error);
+        setError(error.message);
+      } else {
+        console.log(data);
+        setBudgets(data);
+      }
+      setLoading(false);
+    }
+
+    fetchBudgets();
   }, []);
 
   return (
     <div className="p-4">
-      <h2 className="text-xl font-semibold mb-4">Budget Overview {budgets.length}</h2>
-      {budgets.length > 0 ? (
-        <table className="min-w-full border border-gray-300 bg-white shadow-md rounded-lg">
-          <thead>
-            <tr className="bg-gray-100 border-b">
-              <th className="p-2 border-r">Category ID</th>
-              <th className="p-2 border-r">Start Date</th>
-              <th className="p-2 border-r">End Date</th>
-              <th className="p-2">Target Amount</th>
+    <h2 className="text-xl font-semibold mb-4">Budget Overview ({budgets.length})</h2>
+    {loading ? (
+      <p>Loading budgets...</p>
+    ) : error ? (
+      <p className="text-red-500">Error: {error}</p>
+    ) : budgets.length > 0 ? (
+      <table className="min-w-full border border-gray-300 bg-white shadow-md rounded-lg">
+        <thead>
+          <tr className="bg-gray-100 border-b">
+            <th className="p-2 border-r">Category ID</th>
+            <th className="p-2 border-r">Start Date</th>
+            <th className="p-2 border-r">End Date</th>
+            <th className="p-2">Target Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {budgets.map((budget, index) => (
+            <tr key={index} className="border-b hover:bg-gray-50">
+              <td className="p-2 border-r text-center">{budget.catid}</td>
+              <td className="p-2 border-r text-center">{budget.startdate}</td>
+              <td className="p-2 border-r text-center">{budget.enddate}</td>
+              <td className="p-2 text-center">${budget.targetamount}</td>
             </tr>
-          </thead>
-          <tbody>
-            {budgets.map((budget) => (
-              <tr key={budget.budgetID} className="border-b hover:bg-gray-50">
-                <td className="p-2 border-r text-center">{budget.catID}</td>
-                <td className="p-2 border-r text-center">
-                  {new Date(budget.startDate).toISOString().split("T")[0]}
-                </td>
-                <td className="p-2 border-r text-center">
-                  {new Date(budget.endDate).toISOString().split("T")[0]}
-                </td>
-                <td className="p-2 text-center">${budget.targetAmount}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p>Loading budgets...</p>
-      )}
-    </div>
+          ))}
+        </tbody>
+      </table>
+    ) : (
+      <p>No budgets found for this account.</p>
+    )}
+  </div>
   );
-}
-
-
-function PrintData(){
-    return (
-        <>
-            <FetchBudgets></FetchBudgets>
-        </>
-    );
 }
 
 // export default PrintData;
