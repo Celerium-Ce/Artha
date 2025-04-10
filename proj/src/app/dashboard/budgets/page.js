@@ -25,7 +25,7 @@ function BudgetTable() {
   const [budgets, setBudgets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const accountId = 1;
+  const accountId = 2;
 
   useEffect(() => {
     async function fetchBudgets() {
