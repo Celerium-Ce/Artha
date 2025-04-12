@@ -1,4 +1,3 @@
-// components/TransactionForm.js
 import { useState } from "react";
 
 const categories = ["Salary", "Groceries", "Rent", "Utilities"];
@@ -7,13 +6,13 @@ export default function TransactionForm() {
   const [category, setCategory] = useState(categories[0]);
   const [amount, setAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Cash");
-  const [tags, setTags] = useState("");
   const [transactionType, setTransactionType] = useState("income"); // Income or Expense
+  const [timestamp, setTimestamp] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
     // Handle form submission logic
-    console.log({ transactionType, category, amount, paymentMethod, tags });
+    console.log({ transactionType, category, amount, paymentMethod, timestamp });
   };
 
   return (
@@ -28,6 +27,7 @@ export default function TransactionForm() {
             value={transactionType}
             onChange={(e) => setTransactionType(e.target.value)}
             className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
+            required
           >
             <option value="income">Income</option>
             <option value="expense">Expense</option>
@@ -40,6 +40,7 @@ export default function TransactionForm() {
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
+            required
           >
             {categories.map((cat) => (
               <option key={cat} value={cat}>
@@ -66,6 +67,7 @@ export default function TransactionForm() {
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
             className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
+            required
           >
             <option value="Cash">Cash</option>
             <option value="UPI">UPI</option>
@@ -74,12 +76,13 @@ export default function TransactionForm() {
         </div>
 
         <div className="flex flex-col">
-          <label className="text-sm font-medium text-gray-400">Tags</label>
+          <label className="text-sm font-medium text-gray-400">Timestamp</label>
           <input
-            type="text"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
+            type="datetime-local"
+            value={timestamp}
+            onChange={(e) => setTimestamp(e.target.value)}
             className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
+            required
           />
         </div>
 

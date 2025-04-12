@@ -47,3 +47,31 @@ button:hover {
   background-color: #4a5568; /* Slightly darkened button background on hover */
   color: #e2e8f0; /* White text on hover */
 }
+
+
+/* Container for the entire page */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Styling for chart boxes to manage chart size */
+.chart-box {
+  max-width: 600px;
+  margin: 0 auto;
+  height: 300px;
+}
+
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Chart container for overall padding and spacing */
+.chart-box {
+  padding: 20px;
+  background-color: #1a202c; /* Dark background for charts */
+  border-radius: 10px;
+}
