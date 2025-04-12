@@ -71,128 +71,130 @@ const ReportsPage = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-800 text-gray-200 rounded-2xl shadow-lg max-w-4xl mx-auto">
-      <h1 className="text-3xl font-semibold text-teal-400 opacity-90 mb-6">Reports and Insights</h1>
+    <div>
+      <h1 className="text-3xl font-semibold text-teal-400 opacity-90 mb-6 pt-6 text-center">Reports and Insights</h1>
 
-      <div className="mb-6">
-        <label className="text-sm font-medium text-gray-400 mr-4">Select Chart Type:</label>
-        <select
-          className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
-          value={selectedChart}
-          onChange={(e) => setSelectedChart(e.target.value)}
-        >
-          <option value="categoryPie">Category-wise Spending (Pie Chart)</option>
-          <option value="incomeSpendingBar">Income vs Spending (Bar Chart)</option>
-          <option value="monthlyTrends">Monthly Spending Trends</option>
-          <option value="yearlyTrends">Yearly Spending Trends</option>
-        </select>
-      </div>
-
-      <div className="space-y-10">
-        {selectedChart === "categoryPie" && (
-          <div>
-            <h2 className="text-xl font-semibold text-teal-300 mb-4">Category-wise Income</h2>
-            <div className="h-64">
-              <Pie data={pieChartData("income")} options={{ responsive: true, maintainAspectRatio: false }} />
-            </div>
-            <h2 className="text-xl font-semibold text-teal-300 mt-8 mb-4">Category-wise Spending</h2>
-            <div className="h-64">
-              <Pie data={pieChartData("spending")} options={{ responsive: true, maintainAspectRatio: false }} />
-            </div>
-          </div>
-        )}
-
-        {selectedChart === "incomeSpendingBar" && (
-          <div>
-            <h2 className="text-xl font-semibold text-teal-300 mb-4">Income vs Spending Comparison</h2>
-            <div className="h-64">
-              <Bar data={barChartData} options={{ responsive: true, maintainAspectRatio: false }} />
-            </div>
-          </div>
-        )}
-
-        {selectedChart === "monthlyTrends" && (
-          <div>
-            <h2 className="text-xl font-semibold text-teal-300 mb-4">Monthly Spending Trends</h2>
-            <div className="h-64">
-              <Bar
-                data={{
-                  labels: Object.keys(monthlyData),
-                  datasets: [
-                    {
-                      label: "Amount",
-                      data: Object.values(monthlyData),
-                      backgroundColor: "#FF6384",
-                    },
-                  ],
-                }}
-                options={{ responsive: true, maintainAspectRatio: false }}
-              />
-            </div>
-          </div>
-        )}
-
-        {selectedChart === "yearlyTrends" && (
-          <div>
-            <h2 className="text-xl font-semibold text-teal-300 mb-4">Yearly Spending Trends</h2>
-            <div className="h-64">
-              <Bar
-                data={{
-                  labels: Object.keys(yearlyData),
-                  datasets: [
-                    {
-                      label: "Amount",
-                      data: Object.values(yearlyData),
-                      backgroundColor: "#36A2EB",
-                    },
-                  ],
-                }}
-                options={{ responsive: true, maintainAspectRatio: false }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-wrap gap-4 mt-10">
-        {hasMounted && (
-          <CSVLink
-            data={transactions}
-            headers={[
-              { label: "ID", key: "id" },
-              { label: "Type", key: "type" },
-              { label: "Category", key: "category" },
-              { label: "Amount", key: "amount" },
-              { label: "Date", key: "date" },
-            ]}
-            filename="transactions_report.csv"
+      <div className="p-6 bg-gray-800 text-gray-200 rounded-2xl shadow-lg max-w-4xl mx-auto">
+        <div className="mb-6">
+          <label className="text-sm font-medium text-gray-400 mr-4">Select Chart Type:</label>
+          <select
+            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
+            value={selectedChart}
+            onChange={(e) => setSelectedChart(e.target.value)}
           >
-            <button className="px-4 py-2 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition">
-              Export to CSV
-            </button>
-          </CSVLink>
-        )}
+            <option value="categoryPie">Category-wise Spending (Pie Chart)</option>
+            <option value="incomeSpendingBar">Income vs Spending (Bar Chart)</option>
+            <option value="monthlyTrends">Monthly Spending Trends</option>
+            <option value="yearlyTrends">Yearly Spending Trends</option>
+          </select>
+        </div>
 
-        <button
-          onClick={() => {
-            const doc = new jsPDF();
-            doc.text("Transactions Report", 20, 20);
-            autoTable(doc, {
-              head: [["ID", "Type", "Category", "Amount", "Date"]],
-              body: transactions.map((txn) => [
-                txn.id,
-                txn.type,
-                txn.category,
-                txn.amount,
-                txn.date,
-              ]),
-            });
-            doc.save("transactions_report.pdf");
-          }}
-          className="px-4 py-2 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition"
-        >
-          Export to PDF
-        </button>
+        <div className="space-y-10">
+          {selectedChart === "categoryPie" && (
+            <div>
+              <h2 className="text-xl font-semibold text-teal-300 mb-4">Category-wise Income</h2>
+              <div className="h-64">
+                <Pie data={pieChartData("income")} options={{ responsive: true, maintainAspectRatio: false }} />
+              </div>
+              <h2 className="text-xl font-semibold text-teal-300 mt-8 mb-4">Category-wise Spending</h2>
+              <div className="h-64">
+                <Pie data={pieChartData("spending")} options={{ responsive: true, maintainAspectRatio: false }} />
+              </div>
+            </div>
+          )}
+
+          {selectedChart === "incomeSpendingBar" && (
+            <div>
+              <h2 className="text-xl font-semibold text-teal-300 mb-4">Income vs Spending Comparison</h2>
+              <div className="h-64">
+                <Bar data={barChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+              </div>
+            </div>
+          )}
+
+          {selectedChart === "monthlyTrends" && (
+            <div>
+              <h2 className="text-xl font-semibold text-teal-300 mb-4">Monthly Spending Trends</h2>
+              <div className="h-64">
+                <Bar
+                  data={{
+                    labels: Object.keys(monthlyData),
+                    datasets: [
+                      {
+                        label: "Amount",
+                        data: Object.values(monthlyData),
+                        backgroundColor: "#FF6384",
+                      },
+                    ],
+                  }}
+                  options={{ responsive: true, maintainAspectRatio: false }}
+                />
+              </div>
+            </div>
+          )}
+
+          {selectedChart === "yearlyTrends" && (
+            <div>
+              <h2 className="text-xl font-semibold text-teal-300 mb-4">Yearly Spending Trends</h2>
+              <div className="h-64">
+                <Bar
+                  data={{
+                    labels: Object.keys(yearlyData),
+                    datasets: [
+                      {
+                        label: "Amount",
+                        data: Object.values(yearlyData),
+                        backgroundColor: "#36A2EB",
+                      },
+                    ],
+                  }}
+                  options={{ responsive: true, maintainAspectRatio: false }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-wrap gap-4 mt-10">
+          {hasMounted && (
+            <CSVLink
+              data={transactions}
+              headers={[
+                { label: "ID", key: "id" },
+                { label: "Type", key: "type" },
+                { label: "Category", key: "category" },
+                { label: "Amount", key: "amount" },
+                { label: "Date", key: "date" },
+              ]}
+              filename="transactions_report.csv"
+            >
+              <button className="px-4 py-2 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition">
+                Export to CSV
+              </button>
+            </CSVLink>
+          )}
+
+          <button
+            onClick={() => {
+              const doc = new jsPDF();
+              doc.text("Transactions Report", 20, 20);
+              autoTable(doc, {
+                head: [["ID", "Type", "Category", "Amount", "Date"]],
+                body: transactions.map((txn) => [
+                  txn.id,
+                  txn.type,
+                  txn.category,
+                  txn.amount,
+                  txn.date,
+                ]),
+              });
+              doc.save("transactions_report.pdf");
+            }}
+            className="px-4 py-2 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition"
+          >
+            Export to PDF
+          </button>
+        </div>
       </div>
     </div>
   );

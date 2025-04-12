@@ -14,7 +14,7 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #323a4a; /* Slightly darker */
+    --background: #121927; /* Slightly darker */
     --foreground: #e2e8f0; /* Light text for dark mode */
   }
 }
@@ -48,30 +48,16 @@ button:hover {
   color: #e2e8f0; /* White text on hover */
 }
 
-
-/* Container for the entire page */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
-/* Styling for chart boxes to manage chart size */
-.chart-box {
-  max-width: 600px;
-  margin: 0 auto;
-  height: 300px;
-}
-
+/* Style for the chart containers */
 .chart-container {
   display: flex;
   flex-direction: column;
   gap: 2rem;
 }
 
-/* Chart container for overall padding and spacing */
+/* Style for individual chart boxes to control their size */
 .chart-box {
-  padding: 20px;
-  background-color: #1a202c; /* Dark background for charts */
-  border-radius: 10px;
+  max-width: 500px;  /* You can adjust the width */
+  max-height: 300px; /* Adjust the height as needed */
+  margin: 0 auto;    /* Center the charts */
 }
