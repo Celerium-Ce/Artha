@@ -37,13 +37,26 @@ export default function Login() {
       router.push("/user"); // Redirect to user
     }
     setLoading(false);
-    setLoading(false);
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white text-black">
-      <div className="w-full max-w-md border-1 border-black-500 bg-gray-100 p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
+    <div 
+      className="flex min-h-screen items-center justify-center p-6"
+      style={{
+        backgroundColor: "var(--background)",
+        color: "var(--foreground)"
+      }}
+    >
+      <div 
+        className="w-full max-w-md p-6 rounded-lg shadow-lg"
+        style={{ backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))" }}
+      >
+        <h2 
+          className="text-2xl font-bold mb-4 text-center opacity-90"
+          style={{ color: "var(--highlight, #fff)" }}
+        >
+          Login
+        </h2>
 
         {error && <p className="text-red-500 text-center">{error}</p>}
 
@@ -54,7 +67,11 @@ export default function Login() {
             placeholder="Email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full px-3 py-2 rounded-lg bg-white text-black"
+            className="w-full px-3 py-2 rounded-lg border border-opacity-20"
+            style={{ 
+              backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))",
+              borderColor: "var(--highlight, #4a7dfc)" 
+            }}
             required
           />
 
@@ -64,25 +81,40 @@ export default function Login() {
             placeholder="Password"
             value={formData.password}
             onChange={handleChange}
-            className="w-full px-3 py-2 rounded-lg bg-white text-black"
+            className="w-full px-3 py-2 rounded-lg border border-opacity-20"
+            style={{ 
+              backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))",
+              borderColor: "var(--highlight, #4a7dfc)" 
+            }}
             required
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-500 text-white px-3 py-2 rounded-lg"
+            className="w-full px-4 py-2 rounded-md"
+            style={{ backgroundColor: "var(--accent, #4a7dfc)" }}
           >
             {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-        <p className="text-center mt-4">
-          <a href="/auth/reset-request" className="text-blue-500">Forgot password?</a>
+        <p className="text-center mt-4 opacity-90">
+          <a 
+            href="/auth/reset-request" 
+            style={{ color: "var(--highlight, #4a7dfc)" }}
+          >
+            Forgot password?
+          </a>
         </p>
-        <p className="text-center mt-4">
-          Dont have an account? <a href="/auth/register" className="text-blue-500">Register</a>
+        <p className="text-center mt-4 opacity-90">
+          Don&apos;t have an account?{" "}
+          <a 
+            href="/auth/register" 
+            style={{ color: "var(--highlight, #4a7dfc)" }}
+          >
+            Register
+          </a>
         </p>
-        
       </div>
     </div>
   );

@@ -24,20 +24,51 @@ export default function UpdatePassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black text-white">
-      <div className="p-6 bg-gray-800 rounded-lg shadow-md w-96">
-        <h2 className="text-xl font-bold text-center mb-4">Set New Password</h2>
-        {message && <p className="text-center mb-4">{message}</p>}
+    <div 
+      className="min-h-screen flex items-center justify-center p-6"
+      style={{
+        backgroundColor: "var(--background)",
+        color: "var(--foreground)"
+      }}
+    >
+      <div 
+        className="p-6 rounded-lg shadow-md w-96"
+        style={{ backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))" }}
+      >
+        <h2 
+          className="text-xl font-bold text-center mb-4 opacity-90"
+          style={{ color: "var(--highlight, #fff)" }}
+        >
+          Set New Password
+        </h2>
+        
+        {message && (
+          <p 
+            className="text-center mb-4 opacity-90"
+            style={{ color: message.includes("successfully") ? "var(--highlight, #4a7dfc)" : "red" }}
+          >
+            {message}
+          </p>
+        )}
+        
         <form onSubmit={handleUpdatePassword} className="space-y-4">
           <input
             type="password"
             placeholder="New Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 rounded bg-gray-700 text-white"
+            className="w-full p-2 rounded border border-opacity-20"
+            style={{ 
+              backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))",
+              borderColor: "var(--highlight, #4a7dfc)" 
+            }}
             required
           />
-          <button type="submit" className="w-full bg-green-500 p-2 rounded">
+          <button 
+            type="submit" 
+            className="w-full p-2 rounded"
+            style={{ backgroundColor: "var(--accent, #4a7dfc)" }}
+          >
             Update Password
           </button>
         </form>

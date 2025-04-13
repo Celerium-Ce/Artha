@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
-import { toast,ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 export default function Register() {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -48,7 +50,7 @@ export default function Register() {
       toast.error(error.message);
       setLoading(false);
       return;
-        } else {
+    } else {
       toast.success("Check your email to confirm your account!!!!");
       setTimeout(() => {
         router.push("/auth"); // Redirect to login after 3 seconds
@@ -58,27 +60,42 @@ export default function Register() {
 
     const user = data.user;
     if (user) {
-        const { error: insertError } = await supabase.from("User").insert([
+      const { error: insertError } = await supabase.from("User").insert([
         { 
-            userid: user.id,
-            name:name, 
-            email: email }
-        ]);
+          userid: user.id,
+          name: name, 
+          email: email 
+        }
+      ]);
 
-    if (insertError) {
-      setError(insertError.message);
-      setLoading(false);
-      return;
+      if (insertError) {
+        setError(insertError.message);
+        setLoading(false);
+        return;
+      }
     }
-  }
 
     setLoading(false);
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-black px-4">
-      <div className="w-full max-w-md bg-gray-900 p-6 rounded-lg shadow-lg">
-        <h2 className="text-2xl font-bold text-center text-white mb-4">Register</h2>
+    <div 
+      className="flex min-h-screen items-center justify-center p-6"
+      style={{
+        backgroundColor: "var(--background)",
+        color: "var(--foreground)"
+      }}
+    >
+      <div 
+        className="w-full max-w-md p-6 rounded-lg shadow-lg"
+        style={{ backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))" }}
+      >
+        <h2 
+          className="text-2xl font-bold text-center mb-4 opacity-90"
+          style={{ color: "var(--highlight, #fff)" }}
+        >
+          Register
+        </h2>
 
         {error && <p className="text-red-500 text-center">{error}</p>}
 
@@ -89,7 +106,11 @@ export default function Register() {
             placeholder="Your Name"
             value={formData.name}
             onChange={handleChange}
-            className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full px-4 py-2 rounded-lg border border-opacity-20"
+            style={{ 
+              backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))",
+              borderColor: "var(--highlight, #4a7dfc)" 
+            }}
             required
           />
 
@@ -99,7 +120,11 @@ export default function Register() {
             placeholder="Email"
             value={formData.email}
             onChange={handleChange}
-            className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full px-4 py-2 rounded-lg border border-opacity-20"
+            style={{ 
+              backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))",
+              borderColor: "var(--highlight, #4a7dfc)" 
+            }}
             required
           />
 
@@ -109,22 +134,30 @@ export default function Register() {
             placeholder="Password"
             value={formData.password}
             onChange={handleChange}
-            className="w-full px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full px-4 py-2 rounded-lg border border-opacity-20"
+            style={{ 
+              backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))",
+              borderColor: "var(--highlight, #4a7dfc)" 
+            }}
             required
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+            className="w-full px-4 py-2 rounded-md"
+            style={{ backgroundColor: "var(--accent, #4a7dfc)" }}
           >
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
 
-        <p className="text-center mt-4 text-gray-400">
+        <p className="text-center mt-4 opacity-90">
           Already have an account?{" "}
-          <a href="/auth/login" className="text-blue-400 hover:underline">
+          <a 
+            href="/auth/login" 
+            style={{ color: "var(--highlight, #4a7dfc)" }}
+          >
             Login
           </a>
         </p>

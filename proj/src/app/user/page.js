@@ -12,7 +12,8 @@ export default function Dashboard() {
     const [userData, setUserData] = useState(null);
 
     const getData = async () => {
-        const { data, error } = await supabase.from("User").select("*").eq("userid", user.id);
+        // Using email instead of id to avoid type mismatch errors
+        const { data, error } = await supabase.from("User").select("*").eq("email", user.email);
         if (error) {
             console.error("Error fetching data:", error.message);
             return;
@@ -22,14 +23,13 @@ export default function Dashboard() {
 
     const handleChangePassword = async () => {
         const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
-              redirectTo: "http://localhost:3000/auth/update-password", // Change for production
-            });
+            redirectTo: "http://localhost:3000/auth/update-password",
+        });
         if (error) {
             console.error("Error sending password reset email:", error.message);
             return;
         }
         toast.success("Password reset email sent!");
-        
     };
 
     useEffect(() => {
@@ -38,57 +38,114 @@ export default function Dashboard() {
         }
     }, [user]);
 
-    if (loading) return <p>Loading...</p>;
-    if (!user) return <p>Please log in.</p>;
-    if (!userData) return <p>Loading user data...</p>;
+    if (loading) return <p className="text-center p-6" style={{ color: "var(--foreground)" }}>Loading...</p>;
+    if (!user) return <p className="text-center p-6" style={{ color: "var(--foreground)" }}>Please log in.</p>;
+    if (!userData) return <p className="text-center p-6" style={{ color: "var(--foreground)" }}>Loading user data...</p>;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 py-12">
+        <div 
+            className="min-h-screen p-6"
+            style={{
+                backgroundColor: "var(--background)",
+                color: "var(--foreground)"
+            }}
+        >
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="bg-white rounded-lg shadow-lg p-8">
+                <div 
+                    className="rounded-lg shadow-lg p-8"
+                    style={{ backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))" }}
+                >
                     <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-3xl font-bold text-gray-800">Welcome, {userData.name}!</h1>
+                        <h1 className="text-3xl font-bold opacity-90" style={{ color: "var(--highlight, #fff)" }}>
+                            Welcome, {userData.name}!
+                        </h1>
                         <LogoutButton />
                     </div>
                     
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md mb-6">
-                        <p className="text-lg text-gray-700">
+                    <div 
+                        className="border-l-4 p-4 rounded-md mb-6" 
+                        style={{ 
+                            backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))",
+                            borderColor: "var(--highlight, #4a7dfc)"
+                        }}
+                    >
+                        <p className="text-lg opacity-90">
                             <span className="font-semibold">Your Email:</span> {userData.email || 'Not set'} 
                         </p>
-                        <button className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md">Change Email</button>
+                        <button 
+                            className="mt-2 px-4 py-2 rounded-md" 
+                            style={{ backgroundColor: "var(--accent, #4a7dfc)" }}
+                        >
+                            Change Email
+                        </button>
                     </div>
                     
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md mb-6">
-                        <p className="text-lg text-gray-700">
+                    <div 
+                        className="border-l-4 p-4 rounded-md mb-6"
+                        style={{ 
+                            backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))",
+                            borderColor: "var(--highlight, #4a7dfc)"
+                        }}
+                    >
+                        <p className="text-lg opacity-90">
                             <span className="font-semibold">Password:</span> ********
                         </p>
                         <button 
-                            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md"
+                            className="mt-2 px-4 py-2 rounded-md"
+                            style={{ backgroundColor: "var(--accent, #4a7dfc)" }}
                             onClick={handleChangePassword}
                         >
                             Change Password
                         </button>
                     </div>
 
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md mb-6">
-                        <button className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md">Toggle Dark/Light Theme</button>
+                    <div 
+                        className="border-l-4 p-4 rounded-md mb-6"
+                        style={{ 
+                            backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))",
+                            borderColor: "var(--highlight, #4a7dfc)"
+                        }}
+                    >
+                        <button 
+                            className="mt-2 px-4 py-2 rounded-md"
+                            style={{ backgroundColor: "var(--accent, #4a7dfc)" }}
+                        >
+                            Toggle Dark/Light Theme
+                        </button>
                     </div>
 
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md mb-6">
-                        <select className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md">
+                    <div 
+                        className="border-l-4 p-4 rounded-md mb-6"
+                        style={{ 
+                            backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))",
+                            borderColor: "var(--highlight, #4a7dfc)"
+                        }}
+                    >
+                        <select 
+                            className="mt-2 px-4 py-2 rounded-md"
+                            style={{ backgroundColor: "var(--accent, #4a7dfc)" }}
+                        >
                             <option>Change Language (Show current language later)</option>
                         </select>
                     </div>
 
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-md mb-6">
-                        <select className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md">
+                    <div 
+                        className="border-l-4 p-4 rounded-md mb-6"
+                        style={{ 
+                            backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))",
+                            borderColor: "var(--highlight, #4a7dfc)"
+                        }}
+                    >
+                        <select 
+                            className="mt-2 px-4 py-2 rounded-md"
+                            style={{ backgroundColor: "var(--accent, #4a7dfc)" }}
+                        >
                             <option>Change Currency (Show current currency later)</option> 
                         </select>
                     </div>
-                    
                 </div>
             </div>
-            <ToastContainer/>
+            <ToastContainer />
         </div>
     );
 }
