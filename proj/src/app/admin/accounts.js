@@ -34,7 +34,7 @@ export default function Accounts() {
 
   return (
     <div className="p-6 bg-gray-800 text-gray-200 rounded-2xl border-none shadow-none max-w-4xl mx-auto">
-      <h2 className="text-3xl font-semibold text-[#4B7EFF] opacity-90 mb-6 text-center">Accounts</h2>
+      <h2 className="text-3xl font-semibold text-white opacity-90 mb-6 text-center">Accounts</h2>
 
       <div className="bg-gray-700 p-6 rounded-2xl mb-6">
         <div className="flex justify-between mb-4">

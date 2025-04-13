@@ -59,7 +59,7 @@ export default function Leaderboard() {
 
   return (
     <div className="p-6 bg-gray-800 text-gray-200 rounded-2xl border-none shadow-none max-w-4xl mx-auto">
-      <h2 className="text-3xl font-semibold text-[#4B7EFF] opacity-90 mb-6 text-center">Leaderboard</h2>
+      <h2 className="text-3xl font-semibold text-white opacity-90 mb-6 text-center">Leaderboard</h2>
 
       <div className="bg-gray-700 p-6 rounded-2xl mb-6">
         <table className="min-w-full text-sm text-left">
@@ -100,7 +100,7 @@ export default function Leaderboard() {
       </div>
 
       <div className="bg-gray-700 p-6 rounded-2xl">
-        <h3 className="text-xl font-semibold text-[#4B7EFF] opacity-90 mb-4">Award Badge</h3>
+        <h3 className="text-xl font-semibold text-white opacity-90 mb-4">Award Badge</h3>
         <div className="flex flex-col gap-4 md:flex-row md:items-center">
           <input
             type="email"

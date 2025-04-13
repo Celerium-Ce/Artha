@@ -5,7 +5,7 @@ import Users from './users';
 import Accounts from './accounts';
 import Transactions from './transactions';
 import Category from './category';
-import Leaderboard from './leaderboard';
+import Leaderboard from './leaderBoard';
 import GroupExpense from './groupExpense';
 
 export default function AdminPage() {
