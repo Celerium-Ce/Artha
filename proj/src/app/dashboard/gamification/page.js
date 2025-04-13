@@ -30,21 +30,21 @@ export default function GamificationPage() {
       <div className="p-6 bg-gray-800 text-gray-200 rounded-2xl shadow-lg max-w-4xl mx-auto">
 
         {/* Streak Section */}
-        <div className="bg-gray-700 p-6 rounded-2xl shadow-lg mb-6 text-center">
-          <h2 className="text-xl font-semibold text-[#4B7EFF] opacity-90 mb-2">Your Streak</h2>
+        <div className="bg-gray-700 p-6 rounded-2xl shadow-lg mb-6">
+          <h2 className="text-xl font-semibold text-white opacity-90 mb-2">Your Streak</h2>
           <p className="text-2xl font-bold text-white">🔥 6-day streak</p>
           <p className="text-gray-400 mt-1 text-sm">Keep it going by logging your activity daily!</p>
         </div>
 
         {/* Points Section */}
         <div className="bg-gray-700 p-6 rounded-2xl shadow-lg mb-6">
-          <h2 className="text-xl font-semibold text-[#4B7EFF] opacity-90">Your Points</h2>
+          <h2 className="text-xl font-semibold text-white opacity-90">Your Points</h2>
           <p className="text-3xl font-bold mt-2 text-white">1,250</p>
         </div>
 
         {/* Badges Section */}
         <div className="bg-gray-700 p-6 rounded-2xl shadow-lg mb-6">
-          <h2 className="text-xl font-semibold text-[#4B7EFF] opacity-90 mb-4">Your Badges</h2>
+          <h2 className="text-xl font-semibold text-white opacity-90 mb-4">Your Badges</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {badges.map((badge) => (
               <div
@@ -62,7 +62,7 @@ export default function GamificationPage() {
 
         {/* Leaderboard Section */}
         <div className="bg-gray-700 p-6 rounded-2xl shadow-lg">
-          <h2 className="text-xl font-semibold text-[#4B7EFF] opacity-90 mb-4">Leaderboard</h2>
+          <h2 className="text-xl font-semibold text-white opacity-90 mb-4">Leaderboard</h2>
           <ul className="divide-y divide-gray-600">
             {leaderboard.map((user, index) => (
               <li key={user.name} className="flex justify-between py-2">

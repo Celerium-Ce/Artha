@@ -92,11 +92,11 @@ const ReportsPage = () => {
         <div className="space-y-10">
           {selectedChart === "categoryPie" && (
             <div>
-              <h2 className="text-xl font-semibold text-[#4B7EFF] mb-4">Category-wise Income</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">Category-wise Income</h2>
               <div className="h-64">
                 <Pie data={pieChartData("income")} options={{ responsive: true, maintainAspectRatio: false }} />
               </div>
-              <h2 className="text-xl font-semibold text-[#4B7EFF] mt-8 mb-4">Category-wise Spending</h2>
+              <h2 className="text-xl font-semibold text-white mt-8 mb-4">Category-wise Spending</h2>
               <div className="h-64">
                 <Pie data={pieChartData("spending")} options={{ responsive: true, maintainAspectRatio: false }} />
               </div>

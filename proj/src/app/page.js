@@ -1,7 +1,7 @@
 const HomePage = () => {
   return (
     <div className="bg-gray-900 text-center text-gray-200 p-8 space-y-8">
-      <h1 className="text-5xl font-extrabold text-[#4B7EFF] mb-6">Welcome to Artha</h1>
+      <h1 className="text-5xl font-extrabold text-white mb-6">Welcome to Artha</h1>
       <p className="text-lg text-gray-400 max-w-3xl mx-auto">
         Your Personal Finance Manager. Track, analyze, and optimize your expenses with ease.
       </p>

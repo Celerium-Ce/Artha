@@ -95,7 +95,7 @@ export default function Page() {
       <div className="p-6 bg-gray-800 text-gray-200 rounded-2xl shadow-lg max-w-4xl mx-auto">
         {/* Group Creation Section */}
         <div className="bg-gray-700 p-6 rounded-2xl shadow-lg mb-6">
-          <h2 className="text-xl font-semibold text-[#4B7EFF] opacity-90 mb-4">Create a New Group</h2>
+          <h2 className="text-xl font-semibold text-white opacity-90 mb-4">Create a New Group</h2>
           <div className="flex mb-4">
             <input
               type="text"
@@ -115,7 +115,7 @@ export default function Page() {
 
         {/* Groups Section */}
         <div className="bg-gray-700 p-6 rounded-2xl shadow-lg mb-6">
-          <h2 className="text-xl font-semibold text-[#4B7EFF] opacity-90 mb-4">Your Groups</h2>
+          <h2 className="text-xl font-semibold text-white opacity-90 mb-4">Your Groups</h2>
           <div className="space-y-4">
             {groups.map((group) => {
               const balanceColor = group.balance < 0 ? "text-red-400" : "text-green-400";

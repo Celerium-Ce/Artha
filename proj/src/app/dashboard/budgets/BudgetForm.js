@@ -32,7 +32,7 @@ export default function BudgetForm({ setBudgets, categories }) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-gray-800 p-6 rounded-2xl shadow-lg">
-      <h2 className="text-3xl font-semibold text-[#4B7EFF] opacity-90 mb-4">
+      <h2 className="text-3xl font-semibold text-white opacity-90 mb-4">
         Set a Budget
       </h2>
       <div className="space-y-4">
