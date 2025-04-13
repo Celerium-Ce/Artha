@@ -1,43 +1,116 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS } from 'chart.js/auto';
 
-export default function Category() {
+export default function Categories() {
   const [categories, setCategories] = useState([]);
+  const [newCategory, setNewCategory] = useState('');
+  const [categoryExpenditure, setCategoryExpenditure] = useState({});
 
   useEffect(() => {
     const fetchedCategories = [
-      { catID: 1, catName: 'Food', totalExpenditure: 5000, subcategory: 'Groceries', expenseType: 'Essential' },
-      { catID: 2, catName: 'Entertainment', totalExpenditure: 2000, subcategory: 'Movies', expenseType: 'Non-Essential' },
+      { catID: 1, catName: 'Food' },
+      { catID: 2, catName: 'Entertainment' },
+      { catID: 3, catName: 'Salary' },
     ];
     setCategories(fetchedCategories);
+
+    const expenditures = {
+      Food: 2000,
+      Entertainment: 1500,
+      Salary: 5000,
+    };
+    setCategoryExpenditure(expenditures);
   }, []);
 
+  const addCategory = () => {
+    if (newCategory.trim() !== '') {
+      const newCatID = categories.length + 1;
+      setCategories((prev) => [
+        ...prev,
+        { catID: newCatID, catName: newCategory },
+      ]);
+      setNewCategory('');
+    }
+  };
+
+  const data = {
+    labels: Object.keys(categoryExpenditure),
+    datasets: [
+      {
+        data: Object.values(categoryExpenditure),
+        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+        hoverBackgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'],
+      },
+    ],
+  };
+
   return (
-    <div>
-      <h2 className="text-xl font-semibold text-teal-400 opacity-90 mb-4">Categories</h2>
-      <table className="min-w-full bg-gray-800 text-gray-200">
-        <thead>
-          <tr>
-            <th className="px-4 py-2 text-left">Category ID</th>
-            <th className="px-4 py-2 text-left">Category</th>
-            <th className="px-4 py-2 text-left">Total Expenditure</th>
-            <th className="px-4 py-2 text-left">Subcategory</th>
-            <th className="px-4 py-2 text-left">Expense Type</th>
-          </tr>
-        </thead>
-        <tbody>
-          {categories.map((category) => (
-            <tr key={category.catID}>
-              <td className="px-4 py-2">{category.catID}</td>
-              <td className="px-4 py-2">{category.catName}</td>
-              <td className="px-4 py-2">₹{category.totalExpenditure}</td>
-              <td className="px-4 py-2">{category.subcategory}</td>
-              <td className="px-4 py-2">{category.expenseType}</td>
+    <div className="p-6 bg-gray-800 text-gray-200 rounded-2xl border-none shadow-none max-w-4xl mx-auto">
+      <h2 className="text-3xl font-semibold text-teal-400 opacity-90 mb-6 text-center">Categories</h2>
+
+      <div className="bg-gray-700 p-6 rounded-2xl mb-6">
+        <h3 className="text-xl font-semibold text-teal-400 opacity-90 mb-4">View All Categories</h3>
+        <table className="min-w-full text-sm text-left">
+          <thead>
+            <tr className="text-gray-300">
+              <th className="px-4 py-2">Category ID</th>
+              <th className="px-4 py-2">Category Name</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {categories.map((category) => (
+              <tr key={category.catID} className="border-t border-gray-600">
+                <td className="px-4 py-2">{category.catID}</td>
+                <td className="px-4 py-2">{category.catName}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="bg-gray-700 p-6 rounded-2xl mb-6">
+        <h3 className="text-xl font-semibold text-teal-400 opacity-90 mb-4">Add New Category</h3>
+        <div className="flex items-center">
+          <input
+            type="text"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            placeholder="Enter new category name"
+            className="w-full p-2 rounded bg-gray-600 text-white placeholder-gray-400"
+          />
+          <button
+            onClick={addCategory}
+            className="ml-4 bg-teal-500 text-white font-semibold px-6 py-2 rounded hover:bg-teal-400 transition"
+          >
+            Add Category
+          </button>
+        </div>
+      </div>
+
+      <div className="bg-gray-700 p-6 rounded-2xl mb-6">
+        <h3 className="text-xl font-semibold text-teal-400 opacity-90 mb-4">Category-Wise Expenditure</h3>
+        <div className="flex flex-col md:flex-row items-center justify-center gap-8">
+          <div className="w-48 h-48">
+            <Pie data={data} options={{ plugins: { legend: { display: false } } }} />
+          </div>
+          <div>
+            <ul className="text-sm space-y-2 text-gray-300">
+              {Object.entries(categoryExpenditure).map(([category, amount], idx) => (
+                <li key={category}>
+                  <span
+                    className="inline-block w-3 h-3 rounded-full mr-2"
+                    style={{ backgroundColor: data.datasets[0].backgroundColor[idx] }}
+                  ></span>
+                  {category}: ₹{amount}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
