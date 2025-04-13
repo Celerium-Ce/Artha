@@ -3,6 +3,8 @@
 :root {
   --background: #323a4a; /* Darker background */
   --foreground: #e2e8f0; /* Lighter foreground for text */
+  --background: #323a4a; /* Darker background */
+  --foreground: #e2e8f0; /* Lighter foreground for text */
 }
 
 @theme inline {
@@ -14,6 +16,8 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    --background: #121927; /* Slightly darker */
+    --foreground: #e2e8f0; /* Light text for dark mode */
     --background: #121927; /* Slightly darker */
     --foreground: #e2e8f0; /* Light text for dark mode */
   }
