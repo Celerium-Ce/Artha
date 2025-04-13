@@ -34,8 +34,8 @@ export default function AdminPage() {
             <button
               key={key}
               onClick={() => toggleSection(key)}
-              className={`bg-teal-500 text-white px-4 py-2 rounded-xl shadow-sm transition-all duration-200 hover:bg-teal-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-teal-300 ${
-                activeSection === key ? 'ring-2 ring-offset-2 ring-teal-300' : ''
+              className={`bg-[#4B7EFF] text-white px-4 py-2 rounded-xl shadow-sm transition-all duration-200 hover:bg-[#4B7EFF] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#4B7EFF] ${
+                activeSection === key ? 'ring-2 ring-offset-2 ring-[#4B7EFF]' : ''
               }`}
             >
               {label}

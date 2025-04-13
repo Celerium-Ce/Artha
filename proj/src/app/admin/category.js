@@ -49,10 +49,10 @@ export default function Categories() {
 
   return (
     <div className="p-6 bg-gray-800 text-gray-200 rounded-2xl border-none shadow-none max-w-4xl mx-auto">
-      <h2 className="text-3xl font-semibold text-teal-400 opacity-90 mb-6 text-center">Categories</h2>
+      <h2 className="text-3xl font-semibold text-[#4B7EFF] opacity-90 mb-6 text-center">Categories</h2>
 
       <div className="bg-gray-700 p-6 rounded-2xl mb-6">
-        <h3 className="text-xl font-semibold text-teal-400 opacity-90 mb-4">View All Categories</h3>
+        <h3 className="text-xl font-semibold text-[#4B7EFF] opacity-90 mb-4">View All Categories</h3>
         <table className="min-w-full text-sm text-left">
           <thead>
             <tr className="text-gray-300">
@@ -72,7 +72,7 @@ export default function Categories() {
       </div>
 
       <div className="bg-gray-700 p-6 rounded-2xl mb-6">
-        <h3 className="text-xl font-semibold text-teal-400 opacity-90 mb-4">Add New Category</h3>
+        <h3 className="text-xl font-semibold text-[#4B7EFF] opacity-90 mb-4">Add New Category</h3>
         <div className="flex items-center">
           <input
             type="text"
@@ -83,7 +83,7 @@ export default function Categories() {
           />
           <button
             onClick={addCategory}
-            className="ml-4 bg-teal-500 text-white font-semibold px-6 py-2 rounded hover:bg-teal-400 transition"
+            className="ml-4 bg-[#4B7EFF] text-white font-semibold px-6 py-2 rounded hover:bg-[#4B7EFF] transition"
           >
             Add Category
           </button>
@@ -91,7 +91,7 @@ export default function Categories() {
       </div>
 
       <div className="bg-gray-700 p-6 rounded-2xl mb-6">
-        <h3 className="text-xl font-semibold text-teal-400 opacity-90 mb-4">Category-Wise Expenditure</h3>
+        <h3 className="text-xl font-semibold text-[#4B7EFF] opacity-90 mb-4">Category-Wise Expenditure</h3>
         <div className="flex flex-col md:flex-row items-center justify-center gap-8">
           <div className="w-48 h-48">
             <Pie data={data} options={{ plugins: { legend: { display: false } } }} />

@@ -56,12 +56,12 @@ export default function TransactionList() {
   return (
     <div className="bg-gray-800 rounded-2xl shadow-lg p-6">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-        <h2 className="text-3xl font-semibold text-teal-400 opacity-90">
+        <h2 className="text-3xl font-semibold text-[#4B7EFF] opacity-90">
           Your Transactions
         </h2>
         <div className="flex gap-4">
           <select
-            className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-[#4B7EFF]"
             value={filterOption}
             onChange={(e) => setFilterOption(e.target.value)}
           >
@@ -71,7 +71,7 @@ export default function TransactionList() {
           </select>
 
           <select
-            className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-[#4B7EFF]"
             value={sortOption}
             onChange={(e) => setSortOption(e.target.value)}
           >

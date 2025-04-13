@@ -32,7 +32,7 @@ export default function BudgetForm({ setBudgets, categories }) {
 
   return (
     <form onSubmit={handleSubmit} className="bg-gray-800 p-6 rounded-2xl shadow-lg">
-      <h2 className="text-3xl font-semibold text-teal-400 opacity-90 mb-4">
+      <h2 className="text-3xl font-semibold text-[#4B7EFF] opacity-90 mb-4">
         Set a Budget
       </h2>
       <div className="space-y-4">
@@ -41,7 +41,7 @@ export default function BudgetForm({ setBudgets, categories }) {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
+            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
           >
             <option value="">Select a category</option>
             {categories.map((cat) => (
@@ -58,7 +58,7 @@ export default function BudgetForm({ setBudgets, categories }) {
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
+            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
             placeholder="Budget amount"
           />
         </div>
@@ -69,7 +69,7 @@ export default function BudgetForm({ setBudgets, categories }) {
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
+            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
           />
         </div>
 
@@ -79,13 +79,13 @@ export default function BudgetForm({ setBudgets, categories }) {
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
+            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
           />
         </div>
 
         <button
           type="submit"
-          className="mt-4 bg-teal-500 text-gray-900 rounded-xl py-2 px-4 w-full hover:bg-teal-600 transition-colors"
+          className="mt-4 bg-[#4B7EFF] text-white rounded-xl py-2 px-4 w-full hover:bg-[#4B7EFF] transition-colors"
         >
           Save Budget
         </button>

@@ -49,7 +49,7 @@ export default function Transactions() {
 
   return (
     <div className="p-6 bg-gray-800 text-gray-200 rounded-2xl border-none shadow-none max-w-4xl mx-auto">
-      <h2 className="text-3xl font-semibold text-teal-400 opacity-90 mb-6 text-center">Transactions</h2>
+      <h2 className="text-3xl font-semibold text-[#4B7EFF] opacity-90 mb-6 text-center">Transactions</h2>
 
       <div className="bg-gray-700 p-6 rounded-2xl mb-6">
         <div className="flex justify-between mb-4 space-x-4">
@@ -91,7 +91,7 @@ export default function Transactions() {
             />
             <button
               onClick={filterTransactions}
-              className="bg-teal-500 text-white px-4 py-2 rounded hover:bg-teal-400 transition w-full"
+              className="bg-[#4B7EFF] text-white px-4 py-2 rounded hover:bg-[#4B7EFF] transition w-full"
             >
               Apply Filters
             </button>

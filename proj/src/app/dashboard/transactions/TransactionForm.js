@@ -17,7 +17,7 @@ export default function TransactionForm() {
 
   return (
     <form onSubmit={handleSubmit} className="bg-gray-800 p-6 rounded-2xl shadow-lg">
-      <h2 className="text-3xl font-semibold text-teal-400 opacity-90 mb-4">
+      <h2 className="text-3xl font-semibold text-[#4B7EFF] opacity-90 mb-4">
         Add Transaction
       </h2>
       <div className="space-y-4">
@@ -26,7 +26,7 @@ export default function TransactionForm() {
           <select
             value={transactionType}
             onChange={(e) => setTransactionType(e.target.value)}
-            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
+            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
             required
           >
             <option value="income">Income</option>
@@ -39,7 +39,7 @@ export default function TransactionForm() {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
+            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
             required
           >
             {categories.map((cat) => (
@@ -56,7 +56,7 @@ export default function TransactionForm() {
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
+            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
             required
           />
         </div>
@@ -66,7 +66,7 @@ export default function TransactionForm() {
           <select
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
-            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
+            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
             required
           >
             <option value="Cash">Cash</option>
@@ -81,14 +81,14 @@ export default function TransactionForm() {
             type="datetime-local"
             value={timestamp}
             onChange={(e) => setTimestamp(e.target.value)}
-            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
+            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
             required
           />
         </div>
 
         <button
           type="submit"
-          className="mt-4 bg-teal-500 text-gray-900 rounded-xl py-2 px-4 w-full hover:bg-teal-600 transition-colors"
+          className="mt-4 bg-[#4B7EFF] text-white rounded-xl py-2 px-4 w-full hover:bg-[#4B7EFF] transition-colors"
         >
           Add Transaction
         </button>

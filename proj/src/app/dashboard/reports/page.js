@@ -72,13 +72,13 @@ const ReportsPage = () => {
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold text-teal-400 opacity-90 mb-6 pt-6 text-center">Reports and Insights</h1>
+      <h1 className="text-3xl font-semibold text-[#4B7EFF] opacity-90 mb-6 pt-6 text-center">Reports and Insights</h1>
 
       <div className="p-6 bg-gray-800 text-gray-200 rounded-2xl shadow-lg max-w-4xl mx-auto">
         <div className="mb-6">
           <label className="text-sm font-medium text-gray-400 mr-4">Select Chart Type:</label>
           <select
-            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-teal-500 focus:border-teal-500"
+            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
             value={selectedChart}
             onChange={(e) => setSelectedChart(e.target.value)}
           >
@@ -92,11 +92,11 @@ const ReportsPage = () => {
         <div className="space-y-10">
           {selectedChart === "categoryPie" && (
             <div>
-              <h2 className="text-xl font-semibold text-teal-300 mb-4">Category-wise Income</h2>
+              <h2 className="text-xl font-semibold text-[#4B7EFF] mb-4">Category-wise Income</h2>
               <div className="h-64">
                 <Pie data={pieChartData("income")} options={{ responsive: true, maintainAspectRatio: false }} />
               </div>
-              <h2 className="text-xl font-semibold text-teal-300 mt-8 mb-4">Category-wise Spending</h2>
+              <h2 className="text-xl font-semibold text-[#4B7EFF] mt-8 mb-4">Category-wise Spending</h2>
               <div className="h-64">
                 <Pie data={pieChartData("spending")} options={{ responsive: true, maintainAspectRatio: false }} />
               </div>
@@ -105,7 +105,7 @@ const ReportsPage = () => {
 
           {selectedChart === "incomeSpendingBar" && (
             <div>
-              <h2 className="text-xl font-semibold text-teal-300 mb-4">Income vs Spending Comparison</h2>
+              <h2 className="text-xl font-semibold text-[#4B7EFF] mb-4">Income vs Spending Comparison</h2>
               <div className="h-64">
                 <Bar data={barChartData} options={{ responsive: true, maintainAspectRatio: false }} />
               </div>
@@ -114,7 +114,7 @@ const ReportsPage = () => {
 
           {selectedChart === "monthlyTrends" && (
             <div>
-              <h2 className="text-xl font-semibold text-teal-300 mb-4">Monthly Spending Trends</h2>
+              <h2 className="text-xl font-semibold text-[#4B7EFF] mb-4">Monthly Spending Trends</h2>
               <div className="h-64">
                 <Bar
                   data={{
@@ -135,7 +135,7 @@ const ReportsPage = () => {
 
           {selectedChart === "yearlyTrends" && (
             <div>
-              <h2 className="text-xl font-semibold text-teal-300 mb-4">Yearly Spending Trends</h2>
+              <h2 className="text-xl font-semibold text-[#4B7EFF] mb-4">Yearly Spending Trends</h2>
               <div className="h-64">
                 <Bar
                   data={{
@@ -168,7 +168,7 @@ const ReportsPage = () => {
               ]}
               filename="transactions_report.csv"
             >
-              <button className="px-4 py-2 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition">
+              <button className="px-4 py-2 bg-[#4B7EFF] text-white rounded-xl hover:bg-[#4B7EFF] transition">
                 Export to CSV
               </button>
             </CSVLink>
@@ -190,7 +190,7 @@ const ReportsPage = () => {
               });
               doc.save("transactions_report.pdf");
             }}
-            className="px-4 py-2 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition"
+            className="px-4 py-2 bg-[#4B7EFF] text-white rounded-xl hover:bg-[#4B7EFF] transition"
           >
             Export to PDF
           </button>

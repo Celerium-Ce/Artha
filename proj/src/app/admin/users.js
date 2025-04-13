@@ -39,7 +39,7 @@ export default function Users() {
 
   return (
     <div className="p-6 bg-gray-800 text-gray-200 rounded-2xl border-none shadow-none max-w-4xl mx-auto">
-      <h2 className="text-3xl font-semibold text-teal-400 opacity-90 mb-6 text-center">Users</h2>
+      <h2 className="text-3xl font-semibold text-[#4B7EFF] opacity-90 mb-6 text-center">Users</h2>
 
       <div className="bg-gray-700 p-6 rounded-2xl mb-6">
         <table className="min-w-full text-sm text-left">
@@ -65,7 +65,7 @@ export default function Users() {
                     </span>
                     <button
                       onClick={() => togglePasswordVisibility(user.id)}
-                      className="ml-2 text-teal-400 hover:text-teal-300 transition"
+                      className="ml-2 text-[#4B7EFF] hover:text-[#4B7EFF] transition"
                     >
                       {visiblePasswords[user.id] ? '🙈' : '👁️'}
                     </button>
@@ -86,7 +86,7 @@ export default function Users() {
       </div>
 
       <div className="bg-gray-700 p-6 rounded-2xl">
-        <h3 className="text-xl font-semibold text-teal-400 opacity-90 mb-4">View User Stats</h3>
+        <h3 className="text-xl font-semibold text-[#4B7EFF] opacity-90 mb-4">View User Stats</h3>
         <div className="flex items-center mb-4">
           <input
             type="email"
@@ -97,7 +97,7 @@ export default function Users() {
           />
           <button
             onClick={handleStats}
-            className="ml-4 bg-teal-500 text-white font-semibold px-6 py-2 rounded hover:bg-teal-400 transition"
+            className="ml-4 bg-[#4B7EFF] text-white font-semibold px-6 py-2 rounded hover:bg-[#4B7EFF] transition"
           >
             View Stats
           </button>

@@ -88,14 +88,14 @@ export default function Page() {
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold text-teal-400 opacity-90 mb-6 pt-6 text-center">
+      <h1 className="text-3xl font-semibold text-[#4B7EFF] opacity-90 mb-6 pt-6 text-center">
         Split System
       </h1>
 
       <div className="p-6 bg-gray-800 text-gray-200 rounded-2xl shadow-lg max-w-4xl mx-auto">
         {/* Group Creation Section */}
         <div className="bg-gray-700 p-6 rounded-2xl shadow-lg mb-6">
-          <h2 className="text-xl font-semibold text-teal-400 opacity-90 mb-4">Create a New Group</h2>
+          <h2 className="text-xl font-semibold text-[#4B7EFF] opacity-90 mb-4">Create a New Group</h2>
           <div className="flex mb-4">
             <input
               type="text"
@@ -106,7 +106,7 @@ export default function Page() {
             />
             <button
               onClick={handleCreateGroup}
-              className="ml-4 bg-teal-500 text-white font-semibold px-6 py-2 rounded hover:bg-teal-400 transition"
+              className="ml-4 bg-[#4B7EFF] text-white font-semibold px-6 py-2 rounded hover:bg-[#4B7EFF] transition"
             >
               Create
             </button>
@@ -115,7 +115,7 @@ export default function Page() {
 
         {/* Groups Section */}
         <div className="bg-gray-700 p-6 rounded-2xl shadow-lg mb-6">
-          <h2 className="text-xl font-semibold text-teal-400 opacity-90 mb-4">Your Groups</h2>
+          <h2 className="text-xl font-semibold text-[#4B7EFF] opacity-90 mb-4">Your Groups</h2>
           <div className="space-y-4">
             {groups.map((group) => {
               const balanceColor = group.balance < 0 ? "text-red-400" : "text-green-400";
@@ -159,7 +159,7 @@ export default function Page() {
                         />
                         <button
                           onClick={() => handleAddMember(group.id)}
-                          className="ml-4 w-1/3 bg-teal-500 text-white font-semibold px-6 py-2 rounded hover:bg-teal-400 transition"
+                          className="ml-4 w-1/3 bg-[#4B7EFF] text-white font-semibold px-6 py-2 rounded hover:bg-[#4B7EFF] transition"
                         >
                           Add Member
                         </button>
@@ -176,7 +176,7 @@ export default function Page() {
                         />
                         <button
                           onClick={() => handleUpdateBalance(group.id)}
-                          className="w-1/3 bg-teal-500 text-white font-semibold px-6 py-2 rounded hover:bg-teal-400 transition"
+                          className="w-1/3 bg-[#4B7EFF] text-white font-semibold px-6 py-2 rounded hover:bg-[#4B7EFF] transition"
                         >
                           Update Balance
                         </button>
