@@ -1,5 +1,6 @@
-// app/page.jsx or app/page.tsx
+// app/page.jsx
+import { redirect } from 'next/navigation';
 
 export default function HomePage() {
-  return <h1>Hello from the homepage</h1>;
+  redirect('/auth');
 }
