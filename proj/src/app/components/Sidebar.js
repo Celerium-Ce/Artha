@@ -8,7 +8,7 @@ const Sidebar = () => {
         {/* Home Link */}
         <li>
           <Link
-            href="/"
+            href="/dashboard"
             className="block py-2 px-4 rounded-lg hover:bg-[#4B7EFF] hover:text-white transition duration-200 transform hover:scale-105"
           >
             Home
@@ -57,7 +57,15 @@ const Sidebar = () => {
         </li>
         <li>
           <Link
-            href="/"
+            href="/dashboard/user"
+            className="block py-2 px-4 rounded-lg hover:bg-[#4B7EFF] hover:text-white transition duration-200 transform hover:scale-105"
+          >
+            Profile
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/auth"
             className="block py-2 px-4 rounded-lg hover:bg-[#4B7EFF] hover:text-white text-red-700 font-semibold transition duration-200 transform hover:scale-105"
           >
             Logout

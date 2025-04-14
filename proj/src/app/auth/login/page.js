@@ -34,7 +34,7 @@ export default function Login() {
       setError(error.message);
     } else {
       Cookies.set("supabase-session", JSON.stringify(data.session), { expires: 7 });
-      router.push("/user"); // Redirect to user
+      router.push("/dashboard"); // Redirect to user
     }
     setLoading(false);
   };

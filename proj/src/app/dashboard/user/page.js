@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useAuth } from "../../context/useAuth";
-import { supabase } from "../../lib/supabaseClient";
+import { useAuth } from "../../../context/useAuth";
+import { supabase } from "../../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import LogoutButton from "../components/logoutButton";
+import LogoutButton from "../../components/logoutButton";
 import { toast, ToastContainer } from "react-toastify";
 
 export default function Dashboard() {
