@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function BudgetForm({ setBudgets, categories }) {
   const [category, setCategory] = useState('');
@@ -8,26 +9,28 @@ export default function BudgetForm({ setBudgets, categories }) {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!category || !amount || !startDate || !endDate) return;
-
-    setBudgets((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        category,
-        amount,
-        spent: 0,
-        startDate,
-        endDate,
-      },
-    ]);
-
-    setCategory('');
-    setAmount('');
-    setStartDate('');
-    setEndDate('');
+    
+    const { data, error } = await supabase.rpc('add_budget_entry', {
+      _accountid: accountID,
+      _catname: category,
+      _startdate: startDate,
+      _enddate: endDate,
+      _targetamount: parseFloat(amount),
+    });
+  
+    if (error) {
+      console.error('Failed to add budget:', error.message);
+      alert('Failed to save budget. Please try again.');
+    } else {
+      await fetchBudgets();
+      setCategory('');
+      setAmount('');
+      setStartDate('');
+      setEndDate('');
+    }
   };
 
   return (

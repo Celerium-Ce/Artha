@@ -4,9 +4,21 @@ import { Trash2 } from 'lucide-react';
 import ProgressBar from './ProgressBar'; // Make sure the path is correct based on your project structure
 
 export default function BudgetList({ budgets, setBudgets }) {
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
+    console.log(id);
     const confirmDelete = confirm('Are you sure you want to delete this budget?');
     if (confirmDelete) {
+      const { error } = await supabase.rpc('delete_budget_entry', {
+        _budgetid: id,
+      });
+  
+      if (error) {
+        console.error('Error deleting budget from Supabase:', error.message);
+        alert('Failed to delete the budget.');
+        return;
+      }
+  
+      // Remove from local state
       setBudgets((prev) => prev.filter((b) => b.id !== id));
     }
   };

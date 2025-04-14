@@ -1,12 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@/context/useAuth';
 import BudgetForm from './BudgetForm';
 import BudgetList from './BudgetList';
 
 export default function BudgetPage() {
   const [budgets, setBudgets] = useState([]);
   const categories = ['Food', 'Entertainment', 'Utilities', 'Transport'];
+  const { user, loading } = useAuth();
+
+  console.log(user);
+  if (loading) return <p>Loading...</p>;
+
+  if (!user) return <p>Please log in to view your budgets.</p>;
 
   return (
     <div
