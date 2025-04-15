@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
-export default function BudgetForm({ setBudgets, categories, fetchBudgets }) {
+export default function BudgetForm({ setBudgets, categories, fetchBudgets, getID}) {
   const [category, setCategory] = useState('');
   const [amount, setAmount] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -12,7 +12,9 @@ export default function BudgetForm({ setBudgets, categories, fetchBudgets }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!category || !amount || !startDate || !endDate) return;
-    
+
+    let accountID=await getID();
+    console.log(accountID);
     const { data, error } = await supabase.rpc('add_budget_entry', {
       _accountid: accountID,
       _catname: category,

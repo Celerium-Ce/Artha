@@ -20,15 +20,31 @@ export default function BudgetPage() {
   const categories = ['Food', 'Entertainment', 'Utilities', 'Transport'];
   const { user, loading } = useAuth();
 
+  const getAccountID = async () => {
+    if (!user || !user.id) return null;
+    const { data, error } = await supabase.rpc('get_accountid_by_userid', {
+      _userid: user.id,
+    });
+  
+    if (error) {
+      console.error("Error fetching account ID:", error);
+      return null;
+    }
+
+    console.log("data: ",data);
+  
+    return data;
+  };
+  
+
   const fetchBudgets = async () => {
-    let accountID = await supabase.rpc('get_accountid_by_userid',{
-      _userid: user._userid,
-    })
+    let accountID = await getAccountID();
     const { data, error } = await supabase.rpc('get_budget_by_account', {
       _accountid: accountID,
     });
   
     console.log(data);
+    console.log(accountID);
   
     if (error) {
       console.error('Error fetching budgets:', error.message);
@@ -52,11 +68,12 @@ export default function BudgetPage() {
     setBudgets(enrichedBudgets);
   }
 
-  useEffect(() => {   
-    fetchBudgets();
-  }, []);
-
-  console.log(user);
+  useEffect(() => {
+    if (!loading && user) {
+      console.log(user);
+      fetchBudgets();
+    }
+  }, [loading, user]);
 
   if (loading) return <p>Loading...</p>;
 
@@ -74,7 +91,7 @@ export default function BudgetPage() {
         <h1 className="text-3xl font-bold text-center text-highlight opacity-90">
           Budget Management
         </h1>
-        <BudgetForm setBudgets={setBudgets} categories={categories} />
+        <BudgetForm setBudgets={setBudgets} categories={categories} fetchBudgets={fetchBudgets} getID={getAccountID} />
         <BudgetList budgets={budgets} setBudgets={setBudgets} transactions={[]} />
       </div>
     </div>
