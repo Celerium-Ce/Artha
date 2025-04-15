@@ -258,18 +258,6 @@ export default function TransactionsPage() {
           onSuccess={handleTransactionCreated}
           user={user}
         />
-
-        <div className="flex justify-end mb-4">
-          <select
-            className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md"
-            value={filterOption}
-            onChange={(e) => setFilterOption(e.target.value)}
-          >
-            <option value="all">All</option>
-            <option value="credit">Only Credit (Income)</option>
-            <option value="debit">Only Debit (Expense)</option>
-          </select>
-        </div>
         
         {isLoading ? (
           <p className="text-center">Loading transactions...</p>

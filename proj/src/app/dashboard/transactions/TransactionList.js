@@ -25,7 +25,7 @@ export default function TransactionList({ transactions, onUpdate }) {
       const { error } = await supabase
         .from('Transaction')
         .delete()
-        .eq('transactionid', transactionId);
+        .eq('txnid', transactionId);
   
       if (error) {
         console.error('Error deleting transaction:', error.message);
@@ -67,8 +67,8 @@ export default function TransactionList({ transactions, onUpdate }) {
           onChange={(e) => setFilterOption(e.target.value)}
         >
           <option value="all">All</option>
-          <option value="income">Only Income</option>
-          <option value="expense">Only Expense</option>
+          <option value="credit">Only Credit (Income)</option>
+          <option value="debit">Only Debit (Expense)</option>
         </select>
         <select
           className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md"
@@ -92,7 +92,8 @@ export default function TransactionList({ transactions, onUpdate }) {
               className="border border-gray-600 p-4 rounded-xl flex justify-between items-center hover:shadow-lg transition"
             >
               <div>
-                <p className="font-semibold text-gray-200">
+                {/* Color credit green and debit red */}
+                <p className={`font-semibold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-400'}`}>
                   {tx.type === 'credit' ? '+' : '-'}₹{tx.amount}
                 </p>
                 <div className="flex items-center gap-2">
