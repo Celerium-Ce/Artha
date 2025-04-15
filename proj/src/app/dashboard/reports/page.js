@@ -14,7 +14,7 @@ import {
   LinearScale,
   BarElement,
 } from "chart.js";
-import { awardBadgeForAction } from '../dashboard/gamification/page';
+import { awardBadgeForAction } from '../gamification/page';
 
 ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale, BarElement);
 
