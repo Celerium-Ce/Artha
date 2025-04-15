@@ -11,9 +11,9 @@ export default function Categories() {
 
   useEffect(() => {
     const fetchedCategories = [
-      { catID: 1, catName: 'Food' },
-      { catID: 2, catName: 'Entertainment' },
-      { catID: 3, catName: 'Salary' },
+      { catid: 1, catname: 'Food' },
+      { catid: 2, catname: 'Entertainment' },
+      { catid: 3, catname: 'Salary' },
     ];
     setCategories(fetchedCategories);
 
@@ -27,10 +27,10 @@ export default function Categories() {
 
   const addCategory = () => {
     if (newCategory.trim() !== '') {
-      const newCatID = categories.length + 1;
+      const newcatid = categories.length + 1;
       setCategories((prev) => [
         ...prev,
-        { catID: newCatID, catName: newCategory },
+        { catid: newcatid, catname: newCategory },
       ]);
       setNewCategory('');
     }
@@ -62,9 +62,9 @@ export default function Categories() {
           </thead>
           <tbody>
             {categories.map((category) => (
-              <tr key={category.catID} className="border-t border-gray-600">
-                <td className="px-4 py-2">{category.catID}</td>
-                <td className="px-4 py-2">{category.catName}</td>
+              <tr key={category.catid} className="border-t border-gray-600">
+                <td className="px-4 py-2">{category.catid}</td>
+                <td className="px-4 py-2">{category.catname}</td>
               </tr>
             ))}
           </tbody>
