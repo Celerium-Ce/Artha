@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/context/useAuth';
+import { supabase } from '@/lib/supabaseClient';
 import BudgetForm from './BudgetForm';
 import BudgetList from './BudgetList';
-import { supabase } from '@/lib/supabaseClient';
 
 const catName = async (id) => {
   const { data, error } = await supabase.rpc('get_category_name', { _catid: id });
@@ -15,36 +14,19 @@ const catName = async (id) => {
   return data;
 };
 
+
+
 export default function BudgetPage() {
   const [budgets, setBudgets] = useState([]);
   const categories = ['Food', 'Entertainment', 'Utilities', 'Transport'];
-  const { user, loading } = useAuth();
-
-  const getAccountID = async () => {
-    if (!user || !user.id) return null;
-    const { data, error } = await supabase.rpc('get_accountid_by_userid', {
-      _userid: user.id,
-    });
-  
-    if (error) {
-      console.error("Error fetching account ID:", error);
-      return null;
-    }
-
-    console.log("data: ",data);
-  
-    return data;
-  };
-  
 
   const fetchBudgets = async () => {
-    let accountID = await getAccountID();
+    const accountID = 2;
     const { data, error } = await supabase.rpc('get_budget_by_account', {
       _accountid: accountID,
     });
   
     console.log(data);
-    console.log(accountID);
   
     if (error) {
       console.error('Error fetching budgets:', error.message);
@@ -68,30 +50,23 @@ export default function BudgetPage() {
     setBudgets(enrichedBudgets);
   }
 
-  useEffect(() => {
-    if (!loading && user) {
-      console.log(user);
-      fetchBudgets();
-    }
-  }, [loading, user]);
-
-  if (loading) return <p>Loading...</p>;
-
-  if (!user) return <p>Please log in to view your budgets.</p>;
+  useEffect(() => {   
+    fetchBudgets();
+  }, []);
 
   return (
     <div
       className="min-h-screen p-6"
       style={{
-        backgroundColor: 'var(--background)', // Reference to the global background variable
-        color: 'var(--foreground)', // Reference to the global foreground variable
+        backgroundColor: 'var(--background)',
+        color: 'var(--foreground)',
       }}
     >
       <div className="max-w-4xl mx-auto space-y-8">
         <h1 className="text-3xl font-bold text-center text-highlight opacity-90">
           Budget Management
         </h1>
-        <BudgetForm setBudgets={setBudgets} categories={categories} fetchBudgets={fetchBudgets} getID={getAccountID} />
+        <BudgetForm setBudgets={setBudgets} categories={categories} fetchBudgets={fetchBudgets} />
         <BudgetList budgets={budgets} setBudgets={setBudgets} transactions={[]} />
       </div>
     </div>
