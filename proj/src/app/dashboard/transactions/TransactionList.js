@@ -138,4 +138,3 @@ export default function TransactionList({ accountid, transactions, setTransactio
     </div>
   );
 }
-y
