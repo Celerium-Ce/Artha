@@ -1,61 +1,31 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
 
-export default function TransactionList({ accountid, transactions, setTransactions }) {
+export default function TransactionList({ transactions, onUpdate }) {
   const [sortOption, setSortOption] = useState('date-desc');
   const [filterOption, setFilterOption] = useState('all');
 
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      if (!accountid) return;
-
-      // Query transactions directly via SQL
-      const { data, error } = await supabase
-        .from('Transaction') // Replace with your actual table name
-        .select('txnid, accountid, amount, timestamp, catid, credit_debit')
-        .eq('accountid', accountid);
-
-      if (error) {
-        console.error('Error fetching transactions:', error.message);
-        return;
-      }
-
-      // Map the data to your required format
-      const formatted = data.map((tx) => ({
-        id: tx.txnid,
-        accountid: tx.accountid,
-        amount: tx.amount,
-        date: tx.timestamp,
-        catid: tx.catid,
-        type: tx.credit_debit === 'credit' ? 'income' : 'expense',
-      }));
-
-      setTransactions(formatted);
-    };
-
-    fetchTransactions();
-  }, [accountid, setTransactions]);  // Add setTransactions as a dependency
-
-  const handleDelete = async (txnid) => {
-    console.log('Attempting to delete transaction with txnid:', txnid); // Log txnid for debugging
+  // Handle transaction deletion
+  const handleDelete = async (transactionId) => {
+    console.log('Attempting to delete transaction with id:', transactionId);
     
-    // Ensure txnid is valid
-    if (!txnid) {
-      console.error('Transaction ID is invalid:', txnid);
+    // Ensure transaction ID is valid
+    if (!transactionId) {
+      console.error('Transaction ID is invalid:', transactionId);
       alert('Invalid transaction ID.');
       return;
     }
   
-    const confirmed = window.confirm('Are you sure you want to delete this transaction? This will affect associated data.');
+    const confirmed = window.confirm('Are you sure you want to delete this transaction?');
     if (confirmed) {
       // Delete from database (Supabase)
       const { error } = await supabase
-        .from('Transaction')  // Ensure you're targeting the correct table name (case-sensitive)
+        .from('Transaction')
         .delete()
-        .eq('txnid', txnid);  // Use txnid to delete the transaction with that ID
+        .eq('transactionid', transactionId);
   
       if (error) {
         console.error('Error deleting transaction:', error.message);
@@ -63,18 +33,20 @@ export default function TransactionList({ accountid, transactions, setTransactio
         return;
       }
   
-      // Optionally, remove it from your local state (UI) as well
-      setTransactions((prev) => prev.filter((transaction) => transaction.txnid !== txnid));
-  
+      // Notify parent to refresh transactions
+      if (onUpdate) onUpdate();
+      
       alert('Transaction deleted successfully!');
     }
   };
   
+  // Filter transactions based on selected filter option
   const filtered = transactions.filter((tx) => {
     if (filterOption === 'all') return true;
     return tx.type === filterOption;
   });
 
+  // Sort transactions based on selected sort option
   const sorted = [...filtered].sort((a, b) => {
     if (sortOption === 'amount-asc') return a.amount - b.amount;
     if (sortOption === 'amount-desc') return b.amount - a.amount;
@@ -95,8 +67,8 @@ export default function TransactionList({ accountid, transactions, setTransactio
           onChange={(e) => setFilterOption(e.target.value)}
         >
           <option value="all">All</option>
-          <option value="income">Only Credit</option>
-          <option value="expense">Only Debit</option>
+          <option value="income">Only Income</option>
+          <option value="expense">Only Expense</option>
         </select>
         <select
           className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md"
@@ -116,7 +88,7 @@ export default function TransactionList({ accountid, transactions, setTransactio
         ) : (
           sorted.map((tx) => (
             <div
-              key={tx.id}
+              key={tx.transactionid}
               className="border border-gray-600 p-4 rounded-xl flex justify-between items-center hover:shadow-lg transition"
             >
               <div>
@@ -124,9 +96,10 @@ export default function TransactionList({ accountid, transactions, setTransactio
                   {tx.type === 'income' ? '+' : '-'}₹{tx.amount}
                 </p>
                 <p className="text-sm text-gray-400">{new Date(tx.date).toLocaleString()}</p>
+                <p className="text-xs text-gray-500">Category ID: {tx.category}</p>
               </div>
               <button
-                onClick={() => handleDelete(tx.txnid)}  // Pass txnid here
+                onClick={() => handleDelete(tx.transactionid)}
                 className="text-red-600 hover:text-red-400 transition-colors"
               >
                 <Trash2 size={18} />
@@ -138,4 +111,3 @@ export default function TransactionList({ accountid, transactions, setTransactio
     </div>
   );
 }
-y
