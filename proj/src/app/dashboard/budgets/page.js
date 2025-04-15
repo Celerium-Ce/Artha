@@ -75,8 +75,34 @@ const awardBudgetBadge = async (userId) => {
 
 export default function BudgetPage() {
   const [budgets, setBudgets] = useState([]);
-  const categories = ['Food', 'Entertainment', 'Utilities', 'Transport'];
+  const [categories, setCategories] = useState([]);
   const { user, loading } = useAuth();
+
+  // New function to fetch categories
+  const fetchCategories = async () => {
+    const { data, error } = await supabase
+      .from('Category')
+      .select('catname')
+      .order('catid');
+
+    if (error) {
+      console.error('Error fetching categories:', error.message);
+      return;
+    }
+
+    // Extract category names from the response
+    const categoryNames = data.map(cat => cat.catname);
+    setCategories(categoryNames);
+  };
+
+  // Update useEffect to fetch both budgets and categories
+  useEffect(() => {
+    if (!loading && user) {
+      fetchBudgets();
+      fetchCategories(); // Add this line
+    }
+  }, [loading, user]);
+
 
   const getAccountID = async () => {
     if (!user || !user.id) return null;
