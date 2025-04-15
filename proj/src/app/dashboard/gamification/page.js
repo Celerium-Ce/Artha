@@ -32,13 +32,101 @@ export default function GamificationPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [achievementData, setAchievementData] = useState(null);
+  const [hasCheckedStreak, setHasCheckedStreak] = useState(false);
   
   useEffect(() => {
-    if (user) {
-      checkAndCreateUserAchievements();
-      updateStreak(); // This will update the streak automatically on page load
+    // Only run once when user is available and streak hasn't been checked yet
+    if (user && !hasCheckedStreak) {
+      setHasCheckedStreak(true); // Set flag to prevent multiple executions
+      
+      const initializeData = async () => {
+        await checkAndCreateUserAchievements();
+        await updateStreakOnLoad(); // Call a separate function for the automatic check
+      };
+      
+      initializeData();
     }
-  }, [user]);
+  }, [user, hasCheckedStreak]);
+  
+  // Separate function that only runs on page load (doesn't show toasts)
+  const updateStreakOnLoad = async () => {
+    if (!user) return;
+    
+    try {
+      console.log("Checking streak on page load for user:", user.id);
+      
+      const { data, error } = await supabase
+        .from("Achievements")
+        .select("*")
+        .eq("userid", user.id)
+        .single();
+        
+      if (error || !data) {
+        console.error("Error or no data when checking streak on load:", error);
+        return;
+      }
+      
+      // Current date with time set to midnight for comparison
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Last activity date
+      const lastActivity = data.logdate ? new Date(data.logdate) : null;
+      if (lastActivity) {
+        lastActivity.setHours(0, 0, 0, 0);
+      }
+      
+      // Calculate days difference
+      const diffTime = lastActivity ? today.getTime() - lastActivity.getTime() : null;
+      const diffDays = lastActivity ? diffTime / (1000 * 60 * 60 * 24) : null;
+      
+      console.log("Days since last activity (on load check):", diffDays);
+      
+      let newStreak = data.streak || 1;
+      let shouldUpdate = false;
+      
+      if (diffDays === 1) {
+        // Last activity was yesterday, increment streak silently
+        newStreak = (data.streak || 0) + 1;
+        shouldUpdate = true;
+        console.log("Auto-incrementing streak to:", newStreak);
+      } else if (diffDays > 1) {
+        // More than a day passed, reset streak silently
+        newStreak = 1;
+        shouldUpdate = true;
+        console.log("Auto-resetting streak to 1");
+      }
+      
+      if (shouldUpdate) {
+        // Update database without showing toasts
+        const { error: updateError } = await supabase
+          .from("Achievements")
+          .update({
+            streak: newStreak,
+            logdate: new Date().toISOString()
+          })
+          .eq("userid", user.id);
+          
+        if (updateError) {
+          console.error("Error updating streak on load:", updateError);
+          return;
+        }
+        
+        // Update local state
+        setAchievementData({
+          ...data,
+          streak: newStreak,
+          logdate: new Date().toISOString()
+        });
+      } else {
+        // Just set the data without updating
+        setAchievementData(data);
+      }
+      
+    } catch (err) {
+      console.error("Error in updateStreakOnLoad:", err);
+    }
+  };
   
   const checkAndCreateUserAchievements = async () => {
     if (!user) return;
@@ -66,11 +154,13 @@ export default function GamificationPage() {
       if (!data || data.length === 0) {
         console.log("No achievement record found, creating new one");
         
-        // Create basic record with minimal fields and log the exact values being inserted
+        // Create basic record with minimal fields and add logdate
         const achievementRecord = {
           userid: user.id,
           points: 0,
-          streak: 0
+          badges: ["First Steps"],
+          streak: 1,  // Start with streak of 1 for first visit
+          logdate: new Date().toISOString()  // Initialize with current date
         };
         
         console.log("Attempting to insert record with UUID:", user.id);
@@ -127,7 +217,7 @@ export default function GamificationPage() {
         if (newData) {
           console.log("Successfully created achievement record:", newData);
           setAchievementData(newData);
-          toast.success("Welcome to your achievement tracker!");
+          toast.success("Welcome to your achievement tracker! Your streak starts today.");
         }
       } else {
         console.log("Using existing achievement data");
