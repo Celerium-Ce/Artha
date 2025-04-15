@@ -76,7 +76,7 @@ export default function Register() {
       // Create account for the user
       try {
         // Create a default account for the new user
-        toast.info("Creating your default account...");
+        //toast.info("Creating your default account...");
         
         const { error: createError } = await supabase
           .from("Account")
@@ -90,8 +90,6 @@ export default function Register() {
           console.error("Error creating account:", createError);
           toast.error(`Account creation failed: ${createError.message}`);
           // Continue registration process even if account creation fails
-        } else {
-          toast.success("Default account created successfully!");
         }
       } catch (err) {
         console.error("Error in account creation:", err);
