@@ -114,6 +114,7 @@ export default function GamificationPage() {
   const fetchLeaderboard = async () => {
     try {
       // Fetch achievements joined with user data, ordered by points
+      // Remove the limit to fetch all users
       const { data, error } = await supabase
         .from('Achievements')
         .select(`
@@ -125,8 +126,7 @@ export default function GamificationPage() {
             email
           )
         `)
-        .order('points', { ascending: false })
-        .limit(10); // Limit to top 10 users
+        .order('points', { ascending: false });
       
       if (error) {
         console.error("Error fetching leaderboard:", error);
@@ -586,35 +586,37 @@ export default function GamificationPage() {
           </div>
         </div>
 
-        {/* Leaderboard Section - Updated to show real data */}
+        {/* Leaderboard Section - Updated to be scrollable */}
         <div className="bg-gray-700 p-6 rounded-2xl shadow-lg">
           <h2 className="text-xl font-semibold text-white opacity-90 mb-4">Leaderboard</h2>
           
           {leaderboardData.length === 0 ? (
             <p className="text-gray-400 text-center py-4">Loading leaderboard data...</p>
           ) : (
-            <ul className="divide-y divide-gray-600">
-              {leaderboardData.map((userData, index) => (
-                <li 
-                  key={userData.userId} 
-                  className={`flex justify-between py-3 ${userData.isCurrentUser ? 'bg-gray-600 px-2 rounded-md' : ''}`}
-                >
-                  <div className="flex items-center">
-                    <span className="text-gray-300 mr-2">{index + 1}.</span>
-                    <span className={`${userData.isCurrentUser ? 'text-[#4B7EFF] font-semibold' : 'text-gray-300'}`}>
-                      {userData.name} 
-                      {userData.isCurrentUser && " (You)"}
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    {userData.streak > 0 && (
-                      <span className="text-yellow-500 mr-2">🔥 {userData.streak}</span>
-                    )}
-                    <span className="font-semibold text-white">{userData.points} pts</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <div className="max-h-80 overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#4B7EFF #374151' }}>
+              <ul className="divide-y divide-gray-600">
+                {leaderboardData.map((userData, index) => (
+                  <li 
+                    key={userData.userId} 
+                    className={`flex justify-between py-3 ${userData.isCurrentUser ? 'bg-gray-600 px-2 rounded-md' : ''}`}
+                  >
+                    <div className="flex items-center">
+                      <span className="text-gray-300 mr-2">{index + 1}.</span>
+                      <span className={`${userData.isCurrentUser ? 'text-[#4B7EFF] font-semibold' : 'text-gray-300'}`}>
+                        {userData.name} 
+                        {userData.isCurrentUser && " (You)"}
+                      </span>
+                    </div>
+                    <div className="flex items-center">
+                      {userData.streak > 0 && (
+                        <span className="text-yellow-500 mr-2">🔥 {userData.streak}</span>
+                      )}
+                      <span className="font-semibold text-white">{userData.points} pts</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
           
           {/* No users message */}
