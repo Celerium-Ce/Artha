@@ -36,6 +36,7 @@ export default function GamificationPage() {
   useEffect(() => {
     if (user) {
       checkAndCreateUserAchievements();
+      updateStreak(); // This will update the streak automatically on page load
     }
   }, [user]);
   
@@ -85,7 +86,6 @@ export default function GamificationPage() {
           console.error("Insert error code:", insertError.code);
           console.error("Insert error hint:", insertError.hint);
           console.error("Insert error details:", insertError.details);
-          toast.error(`Insert failed: ${insertError.message}`);
           
           // Additional logging for troubleshooting
           console.log("Checking if User table has this UUID...");
@@ -138,6 +138,98 @@ export default function GamificationPage() {
       toast.error("Unexpected error occurred");
     }
   };
+
+  const updateStreak = async () => {
+    if (!user) return;
+    
+    try {
+      console.log("Updating streak for user:", user.id);
+      
+      // Get current achievement data
+      const { data, error } = await supabase
+        .from("Achievements")
+        .select("*")
+        .eq("userid", user.id)
+        .single();
+        
+      if (error) {
+        console.error("Error fetching achievements:", error);
+        toast.error("Could not update streak: " + error.message);
+        return;
+      }
+      
+      if (!data) {
+        console.log("No achievement record found, creating one with initial streak");
+        await checkAndCreateUserAchievements();
+        return;
+      }
+      
+      // Current date with time set to midnight for date comparison
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      // Last activity date - using logdate instead of last_activity
+      const lastActivity = data.logdate ? new Date(data.logdate) : null;
+      if (lastActivity) {
+        lastActivity.setHours(0, 0, 0, 0);
+      }
+      
+      // Calculate time difference in days
+      const diffTime = lastActivity ? today.getTime() - lastActivity.getTime() : null;
+      const diffDays = lastActivity ? diffTime / (1000 * 60 * 60 * 24) : null;
+      
+      console.log("Days since last activity:", diffDays);
+      
+      let newStreak = 1; // Default to 1 if reset or first time
+      
+      if (diffDays === 1) {
+        // Last activity was exactly yesterday, increment streak
+        newStreak = (data.streak || 0) + 1;
+        console.log("Streak continued! New streak:", newStreak);
+      } else if (diffDays === 0) {
+        // Already logged in today, keep current streak
+        newStreak = data.streak || 1;
+        console.log("Already logged today. Maintaining streak:", newStreak);
+      } else {
+        // Streak broken (more than 1 day passed)
+        console.log("Streak reset to 1 (previous: " + (data.streak || 0) + ")");
+      }
+      
+      // Update the achievement record with logdate instead of last_activity
+      const { error: updateError } = await supabase
+        .from("Achievements")
+        .update({
+          streak: newStreak,
+          logdate: new Date().toISOString()
+        })
+        .eq("userid", user.id);
+        
+      if (updateError) {
+        console.error("Error updating streak:", updateError);
+        toast.error("Could not update streak: " + updateError.message);
+        return;
+      }
+      
+      // Update local state with logdate instead of last_activity
+      setAchievementData({
+        ...data,
+        streak: newStreak,
+        logdate: new Date().toISOString()
+      });
+      
+      if (diffDays === 1) {
+        toast.success(`Streak increased to ${newStreak}! 🔥`);
+      } else if (diffDays === 0) {
+        toast.info(`You've already logged in today. Streak: ${newStreak}`);
+      } else {
+        toast.info(`Welcome back! New streak started.`);
+      }
+      
+    } catch (err) {
+      console.error("Error updating streak:", err);
+      toast.error("An unexpected error occurred");
+    }
+  };
   
   if (loading) return <p className="text-center p-6">Loading...</p>;
   if (!user) {
@@ -150,6 +242,16 @@ export default function GamificationPage() {
       <h1 className="text-3xl font-semibold text-[#4B7EFF] opacity-90 mb-6 pt-6 text-center">Leaderboard</h1>
 
       <div className="p-6 bg-gray-800 text-gray-200 rounded-2xl shadow-lg max-w-4xl mx-auto">
+
+        {/* Check In Button */}
+        <div className="text-center mb-6">
+          <button
+            onClick={updateStreak}
+            className="px-4 py-2 bg-[#4B7EFF] text-white rounded-lg hover:bg-opacity-90 transition-all"
+          >
+            Check In Today
+          </button>
+        </div>
 
         {/* Streak Section */}
         <div className="bg-gray-700 p-6 rounded-2xl shadow-lg mb-6">
