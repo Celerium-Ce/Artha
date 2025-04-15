@@ -51,15 +51,14 @@ export default function Register() {
       setLoading(false);
       return;
     } else {
-      toast.success("Check your email to confirm your account!!!!");
-      setTimeout(() => {
-        router.push("/auth"); // Redirect to login after 3 seconds
-      }, 3000);
+      toast.success("Check your email to confirm your account!");
     }
+    
     console.log("Signing up user...");
 
     const user = data.user;
     if (user) {
+      // Create user record in User table
       const { error: insertError } = await supabase.from("User").insert([
         { 
           userid: user.id,
@@ -73,9 +72,37 @@ export default function Register() {
         setLoading(false);
         return;
       }
+      
+      // Create account for the user
+      try {
+        // Create a default account for the new user
+        //toast.info("Creating your default account...");
+        
+        const { error: createError } = await supabase
+          .from("Account")
+          .insert([{
+            userid: user.id,
+            balance: 0,
+            type: "Family", 
+          }]);
+        
+        if (createError) {
+          console.error("Error creating account:", createError);
+          toast.error(`Account creation failed: ${createError.message}`);
+          // Continue registration process even if account creation fails
+        }
+      } catch (err) {
+        console.error("Error in account creation:", err);
+        // Continue with registration even if account creation fails
+      }
     }
 
     setLoading(false);
+    
+    // Redirect after successful registration
+    setTimeout(() => {
+      router.push("/auth"); // Redirect to login after 3 seconds
+    }, 3000);
   };
 
   return (

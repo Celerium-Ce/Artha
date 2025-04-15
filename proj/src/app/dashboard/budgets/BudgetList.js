@@ -2,6 +2,7 @@
 
 import { Trash2 } from 'lucide-react';
 import ProgressBar from './ProgressBar'; // Make sure the path is correct based on your project structure
+import { supabase } from '@/lib/supabaseClient';
 
 export default function BudgetList({ budgets, setBudgets }) {
   const handleDelete = async (id) => {
