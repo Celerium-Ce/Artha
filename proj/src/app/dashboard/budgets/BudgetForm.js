@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
-export default function BudgetForm({ setBudgets, categories }) {
+export default function BudgetForm({ setBudgets, categories, fetchBudgets }) {
   const [category, setCategory] = useState('');
   const [amount, setAmount] = useState('');
   const [startDate, setStartDate] = useState('');
