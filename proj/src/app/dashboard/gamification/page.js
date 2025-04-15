@@ -654,7 +654,7 @@ export default function GamificationPage() {
                         </>
                       ) : (
                         <>
-                          <span className="font-semibold text-white">
+                          <span className="font-bold text-white">
                             {userData.points} pts
                           </span>
                           {userData.streak > 0 && (
