@@ -7,15 +7,15 @@ import LogoutButton from "../../components/logoutButton";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// Replace static badges with detailed badge definitions
+// Update badge definitions to include point values
 const badgeDefinitions = [
-  { id: "first_step", name: "First Step", description: "Logged into the app for the first time" },
-  { id: "budget_initiate", name: "Budget Initiate", description: "Created your first budget" },
-  { id: "expense_tracker", name: "Expense Tracker", description: "Logged your first expense" },
-  { id: "insight_seeker", name: "Insight Seeker", description: "Viewed your first financial report" },
-  { id: "daily_streaker", name: "Daily Streaker", description: "Checked in for 7 consecutive days" },
-  { id: "consistency_champ", name: "Consistency Champ", description: "Maintained a budget streak for 30 days" },
-  { id: "legacy_keeper", name: "Legacy Keeper", description: "Maintained your budget streak for a full year" }
+  { id: "first_step", name: "First Step", description: "Logged into the app for the first time", points: 50 },
+  { id: "budget_initiate", name: "Budget Initiate", description: "Created your first budget", points: 75 },
+  { id: "expense_tracker", name: "Expense Tracker", description: "Logged your first expense", points: 75 },
+  { id: "insight_seeker", name: "Insight Seeker", description: "Viewed your first financial report", points: 60 },
+  { id: "daily_streaker", name: "Daily Streaker", description: "Checked in for 7 consecutive days", points: 150 },
+  { id: "consistency_champ", name: "Consistency Champ", description: "Maintained a budget streak for 30 days", points: 500 },
+  { id: "legacy_keeper", name: "Legacy Keeper", description: "Maintained your budget streak for a full year", points: 5000 }
 ];
 
 const leaderboard = [
@@ -48,6 +48,7 @@ export default function GamificationPage() {
 
     let badgesToAward = [];
     let currentBadges = currentAchievements.badges || [];
+    let pointsToAdd = 0; // Track points to add
 
     // Helper to check if user already has a badge
     const hasBadge = (badgeId) =>
@@ -57,26 +58,31 @@ export default function GamificationPage() {
     // First Step badge - always awarded on first login
     if (!hasBadge("first_step")) {
       badgesToAward.push("first_step");
+      pointsToAdd += 50; // Add First Step points
     }
 
     // Daily Streaker - awarded for 7 consecutive days
     if (!hasBadge("daily_streaker") && currentAchievements.streak >= 7) {
       badgesToAward.push("daily_streaker");
+      pointsToAdd += 150; // Add Daily Streaker points
     }
 
     // Consistency Champ - awarded for 30 consecutive days
     if (!hasBadge("consistency_champ") && currentAchievements.streak >= 30) {
       badgesToAward.push("consistency_champ");
+      pointsToAdd += 500; // Add Consistency Champ points
     }
 
     // Legacy Keeper - awarded for 365 consecutive days
     if (!hasBadge("legacy_keeper") && currentAchievements.streak >= 365) {
       badgesToAward.push("legacy_keeper");
+      pointsToAdd += 5000; // Add Legacy Keeper points
     }
 
-    // If we have badges to award, update the database
-    if (badgesToAward.length > 0) {
+    // If we have badges to award or points to add, update the database
+    if (badgesToAward.length > 0 || pointsToAdd > 0) {
       console.log("Awarding new badges:", badgesToAward);
+      console.log("Adding points:", pointsToAdd);
 
       // Make sure currentBadges is always an array
       if (!Array.isArray(currentBadges)) {
@@ -85,29 +91,37 @@ export default function GamificationPage() {
 
       // Add to current badges
       const newBadges = [...currentBadges, ...badgesToAward];
+      
+      // Calculate new points total
+      const currentPoints = currentAchievements.points || 0;
+      const newPoints = currentPoints + pointsToAdd;
 
       // Update in database
       const { error } = await supabase
         .from("Achievements")
-        .update({ badges: newBadges })
+        .update({ 
+          badges: newBadges,
+          points: newPoints
+        })
         .eq("userid", user.id);
 
       if (error) {
-        console.error("Error updating badges:", error);
+        console.error("Error updating badges and points:", error);
         return;
       }
 
       // Update local state
       setAchievementData({
         ...currentAchievements,
-        badges: newBadges
+        badges: newBadges,
+        points: newPoints
       });
 
       // Show toast for each new badge
       badgesToAward.forEach(badgeId => {
         const badge = badgeDefinitions.find(b => b.id === badgeId);
         if (badge) {
-          toast.success(`🏆 New Badge: ${badge.name}!`);
+          toast.success(`🏆 New Badge: ${badge.name}! +${badge.points} points`);
         }
       });
     }
@@ -174,6 +188,7 @@ export default function GamificationPage() {
 
       let newStreak = data.streak || 1;
       let shouldUpdate = false;
+      let streakBonusPoints = 0; // Track bonus points from squared streak
 
       // Check if last activity was EXACTLY yesterday
       if (lastActivityDateOnly === yesterdayDateOnly) {
@@ -183,19 +198,30 @@ export default function GamificationPage() {
         console.log("Last activity was yesterday - incrementing streak to:", newStreak);
       } else if (lastActivityDateOnly && lastActivityDateOnly !== todayDateOnly) {
         // Last activity was some other day (not today, not yesterday)
-        // Reset streak
+        // Square the previous streak and add to points if streak was > 1
+        if (data.streak > 1) {
+          const previousStreak = data.streak || 0;
+          streakBonusPoints = previousStreak * previousStreak;
+          console.log(`Streak broken - previous streak (${previousStreak}) squared: +${streakBonusPoints} points`);
+        }
+        // Reset streak to 1
         newStreak = 1;
         shouldUpdate = true;
         console.log("Streak broken - resetting to 1");
       }
 
       if (shouldUpdate) {
+        // Calculate new points total
+        const currentPoints = data.points || 0;
+        const newPoints = currentPoints + streakBonusPoints;
+
         // Update database without showing toasts
         const { error: updateError } = await supabase
           .from("Achievements")
           .update({
             streak: newStreak,
-            logdate: new Date().toISOString()
+            logdate: new Date().toISOString(),
+            points: newPoints
           })
           .eq("userid", user.id);
 
@@ -208,13 +234,19 @@ export default function GamificationPage() {
         const updatedData = {
           ...data,
           streak: newStreak,
-          logdate: new Date().toISOString()
+          logdate: new Date().toISOString(),
+          points: newPoints
         };
 
         setAchievementData(updatedData);
 
         // Check if user earned streak-based badges
         checkAndAwardBadges(updatedData);
+        
+        // Display toast for streak bonus silently on page load
+        if (streakBonusPoints > 0) {
+          console.log(`Added ${streakBonusPoints} bonus points from previous streak`);
+        }
       } else {
         // Just set the data without updating
         setAchievementData(data);
@@ -257,7 +289,7 @@ export default function GamificationPage() {
         // Create basic record with minimal fields and add logdate
         const achievementRecord = {
           userid: user.id,
-          points: 0,
+          points: 50,  // Start with 50 points for First Step badge
           badges: ["first_step"], // Start with First Step badge automatically
           streak: 1,  // Start with streak of 1 for first visit
           logdate: new Date().toISOString()  // Initialize with current date
@@ -318,7 +350,7 @@ export default function GamificationPage() {
           console.log("Successfully created achievement record:", newData);
           setAchievementData(newData);
           toast.success("Welcome to your achievement tracker! Your streak starts today.");
-          toast.success("🏆 New Badge: First Step! You've logged in for the first time.");
+          toast.success("🏆 New Badge: First Step! +50 points");
         }
       } else {
         console.log("Using existing achievement data");
@@ -383,6 +415,7 @@ export default function GamificationPage() {
       }
 
       let newStreak = 1; // Default to 1 if reset or first time
+      let streakBonusPoints = 0; // Track bonus points from squared streak
 
       if (diffDays === 1) {
         // Last activity was yesterday, increment streak
@@ -392,10 +425,19 @@ export default function GamificationPage() {
         // Already logged in today, keep current streak
         newStreak = data.streak || 1;
         console.log("Already logged today. Maintaining streak:", newStreak);
-      } else {
-        // Streak broken (more than 1 day passed)
-        console.log("Streak reset to 1 (previous: " + (data.streak || 0) + ")");
+      } else if (diffDays > 1 && data.streak > 1) {
+        // Streak broken (more than 1 day passed) and had a streak > 1
+        // Square the previous streak and add to points
+        const previousStreak = data.streak || 0;
+        streakBonusPoints = previousStreak * previousStreak;
+        console.log(`Streak broken - previous streak (${previousStreak}) squared: +${streakBonusPoints} points`);
+        // Reset streak to 1
+        console.log("Streak reset to 1 (previous: " + previousStreak + ")");
       }
+
+      // Calculate new points total
+      const currentPoints = data.points || 0;
+      const newPoints = currentPoints + streakBonusPoints;
 
       // Get the current timestamp in a consistent format
       const nowTimestamp = new Date().toISOString();
@@ -406,7 +448,8 @@ export default function GamificationPage() {
         .from("Achievements")
         .update({
           streak: newStreak,
-          logdate: nowTimestamp
+          logdate: nowTimestamp,
+          points: newPoints
         })
         .eq("userid", user.id)
         .select();
@@ -423,7 +466,8 @@ export default function GamificationPage() {
       const updatedData = {
         ...data,
         streak: newStreak,
-        logdate: nowTimestamp
+        logdate: nowTimestamp,
+        points: newPoints
       };
 
       setAchievementData(updatedData);
@@ -433,6 +477,9 @@ export default function GamificationPage() {
       } else if (diffDays === 0) {
         toast.info(`You've already logged in today. Streak: ${newStreak}`);
       } else {
+        if (streakBonusPoints > 0) {
+          toast.info(`Streak bonus: +${streakBonusPoints} points!`);
+        }
         toast.info(`Welcome back! New streak started.`);
       }
 
@@ -524,7 +571,7 @@ export default function GamificationPage() {
   );
 }
 
-// Function to be exported and used in other pages to award badges
+// Update the awardBadgeForAction function to award points too
 export const awardBadgeForAction = async (userId, badgeId) => {
   if (!userId || !badgeId) return false;
 
@@ -548,13 +595,27 @@ export const awardBadgeForAction = async (userId, badgeId) => {
       return true; // Already has badge
     }
 
+    // Find badge details to get points
+    const badge = badgeDefinitions.find(b => b.id === badgeId);
+    if (!badge) {
+      console.error(`Badge definition not found for ID: ${badgeId}`);
+      return false;
+    }
+
     // Add the badge
     const newBadges = [...currentBadges, badgeId];
+    
+    // Calculate new points
+    const currentPoints = data.points || 0;
+    const newPoints = currentPoints + badge.points;
 
     // Update the database
     const { error: updateError } = await supabase
       .from("Achievements")
-      .update({ badges: newBadges })
+      .update({ 
+        badges: newBadges,
+        points: newPoints
+      })
       .eq("userid", userId);
 
     if (updateError) {
@@ -562,9 +623,8 @@ export const awardBadgeForAction = async (userId, badgeId) => {
       return false;
     }
 
-    // Find badge details for potential toast
-    const badge = badgeDefinitions.find(b => b.id === badgeId);
-    console.log(`🏆 Badge awarded: ${badge?.name || badgeId}`);
+    console.log(`🏆 Badge awarded: ${badge.name} (+${badge.points} points)`);
+    toast.success(`🏆 New Badge: ${badge.name}! +${badge.points} points`);
 
     return true;
   } catch (err) {
