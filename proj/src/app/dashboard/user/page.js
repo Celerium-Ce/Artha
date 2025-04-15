@@ -32,6 +32,42 @@ export default function Dashboard() {
         toast.success("Password reset email sent!");
     };
 
+    // Explicitly check and create account for the user
+    const handleCheckOrCreateAccount = async () => {
+        if (!user) {
+            toast.error("User not found.");
+            return;
+        }
+        // Check if account exists
+        const { data: accountRows, error: accountError } = await supabase
+            .from("Account")
+            .select("*")
+            .eq("userid", user.id);
+
+        if (accountError) {
+            toast.error("Error checking account: " + accountError.message);
+            return;
+        }
+        if (accountRows && accountRows.length > 0) {
+            toast.info("Account already exists for this user.");
+            return;
+        }
+
+        // Create account if not exists
+        const { error: createError } = await supabase
+            .from("Account")
+            .insert([{
+                userid: user.id,
+                balance: 0,
+                type: "Family",
+            }]);
+        if (createError) {
+            toast.error("Error creating account: " + createError.message);
+            return;
+        }
+        toast.success("Account created successfully!");
+    };
+
     useEffect(() => {
         if (user) {
             getData();
@@ -142,6 +178,22 @@ export default function Dashboard() {
                         >
                             <option>Change Currency (Show current currency later)</option> 
                         </select>
+                    </div>
+
+                    <div 
+                        className="border-l-4 p-4 rounded-md mb-6"
+                        style={{ 
+                            backgroundColor: "var(--card-background, rgba(255, 255, 255, 0.05))",
+                            borderColor: "var(--highlight, #4a7dfc)"
+                        }}
+                    >
+                        <button 
+                            className="mt-2 px-4 py-2 rounded-md"
+                            style={{ backgroundColor: "var(--accent, #4a7dfc)", color: "#fff" }}
+                            onClick={handleCheckOrCreateAccount}
+                        >
+                            Check/Create Account
+                        </button>
                     </div>
                 </div>
             </div>
