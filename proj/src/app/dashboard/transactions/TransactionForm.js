@@ -9,20 +9,14 @@ export default function TransactionForm({ accountId, onSuccess, user }) {
   const [category, setCategory] = useState('');
   const [categories, setCategories] = useState([]);
   const [amount, setAmount] = useState('');
-  const [transactionType, setTransactionType] = useState('credit'); // credit/debit instead of income/expense
+  const [transactionType, setTransactionType] = useState('credit');
   const [date, setDate] = useState('');
-  
-  // New category states
-  const [isAddingCategory, setIsAddingCategory] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
 
   // Load categories on component mount
   useEffect(() => {
     fetchCategories();
-  }, []);
-
-  // Format today's date for default value
-  useEffect(() => {
+    
+    // Set default date to today
     const today = new Date();
     const formattedDate = today.toISOString().split('T')[0];
     setDate(formattedDate);
@@ -48,60 +42,6 @@ export default function TransactionForm({ accountId, onSuccess, user }) {
     }
   };
 
-  // Handle adding a new category
-  const handleAddCategory = async () => {
-    if (!newCategoryName.trim()) {
-      toast.error('Please enter a category name');
-      return;
-    }
-
-    try {
-      // Check if category already exists
-      const existingCategory = categories.find(
-        cat => cat.catname.toLowerCase() === newCategoryName.toLowerCase()
-      );
-
-      if (existingCategory) {
-        toast.info('This category already exists');
-        setCategory(existingCategory.catname);
-        setIsAddingCategory(false);
-        setNewCategoryName('');
-        return;
-      }
-
-      // Add new category
-      const { data, error } = await supabase
-        .from('Category')
-        .insert([{ catname: newCategoryName }])
-        .select();
-
-      if (error) {
-        console.error('Error adding category:', error);
-        toast.error('Failed to add category');
-        return;
-      }
-
-      console.log('New category added:', data);
-      toast.success('Category added successfully');
-      
-      // Update categories list
-      await fetchCategories();
-      
-      // Select the newly added category
-      if (data && data[0]) {
-        setCategory(data[0].catname);
-      }
-      
-      // Reset new category form
-      setIsAddingCategory(false);
-      setNewCategoryName('');
-      
-    } catch (err) {
-      console.error('Exception adding category:', err);
-      toast.error('An error occurred');
-    }
-  };
-
   // Handle submitting the transaction form
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -112,13 +52,13 @@ export default function TransactionForm({ accountId, onSuccess, user }) {
       return;
     }
     
-    if (!category || !amount || !date) {
+    if (!category || !amount) {
       toast.error('Please fill in all required fields');
       return;
     }
 
-    // Validate amount is greater than 0 (matches db constraint)
-    if (parseFloat(amount) <= 0) {
+    // Validate amount is positive
+    if (parseInt(amount, 10) <= 0) {
       toast.error('Amount must be greater than 0');
       return;
     }
@@ -139,22 +79,25 @@ export default function TransactionForm({ accountId, onSuccess, user }) {
         return;
       }
 
-      // Format data for database insert (match exact field names from schema)
+      // Format data for database insert
       const transactionData = {
         accountid: accountId,
-        amount: parseInt(amount, 10), // DB schema uses integer, not float
-        transactionwhen: new Date(date).toISOString(), // Convert to ISO format
+        amount: parseInt(amount, 10),
         catid: selectedCategory.catid,
-        credit_debit: transactionType // Match DB field name
+        credit_debit: transactionType
       };
+      
+      // Only add date if provided (otherwise use default)
+      if (date) {
+        transactionData.transactionwhen = new Date(date).toISOString();
+      }
 
       console.log('Sending transaction data:', transactionData);
 
       // Insert transaction
       const { data, error } = await supabase
         .from('Transaction')
-        .insert([transactionData])
-        .select();
+        .insert(transactionData);
 
       if (error) {
         console.error('Error adding transaction:', error);
@@ -163,14 +106,12 @@ export default function TransactionForm({ accountId, onSuccess, user }) {
       }
 
       // Success!
-      console.log('Transaction added successfully:', data);
+      console.log('Transaction added successfully');
       toast.success('Transaction saved successfully');
       
       // Reset form
       setAmount('');
       setCategory('');
-      
-      // Keep the transaction type and date as they are for convenience
       
       // Notify parent component to refresh data
       if (onSuccess) {
@@ -204,77 +145,47 @@ export default function TransactionForm({ accountId, onSuccess, user }) {
           </select>
         </div>
 
-        {/* Category Selection or Add New Category */}
+        {/* Simplified Category Selection */}
         <div className="flex flex-col">
-          <div className="flex justify-between items-center">
-            <label className="text-sm font-medium text-gray-400">Category</label>
-            <button
-              type="button"
-              onClick={() => setIsAddingCategory(!isAddingCategory)}
-              className="text-xs text-[#4B7EFF] hover:underline"
-            >
-              {isAddingCategory ? "Select Existing Category" : "Add New Category"}
-            </button>
-          </div>
-          
-          {isAddingCategory ? (
-            <div className="flex mt-1">
-              <input
-                type="text"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                className="bg-gray-700 border border-gray-500 text-gray-200 rounded-l-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF] flex-grow"
-                placeholder="Enter new category name"
-              />
-              <button
-                type="button"
-                onClick={handleAddCategory}
-                className="bg-[#4B7EFF] text-white rounded-r-xl px-3 hover:bg-opacity-90"
-              >
-                Add
-              </button>
-            </div>
-          ) : (
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
-              required={!isAddingCategory}
-            >
-              <option value="">Select a category</option>
-              {categories.map((cat) => (
-                <option key={cat.catid} value={cat.catname}>
-                  {cat.catname}
-                </option>
-              ))}
-            </select>
-          )}
+          <label className="text-sm font-medium text-gray-400">Category</label>
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
+            required
+          >
+            <option value="">Select a category</option>
+            {categories.map((cat) => (
+              <option key={cat.catid} value={cat.catname}>
+                {cat.catname}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Amount - Integer Only */}
+        {/* Amount */}
         <div className="flex flex-col">
           <label className="text-sm font-medium text-gray-400">Amount</label>
           <input
             type="number"
-            min="1" // Enforce DB constraint
-            step="1" // Integer only
+            min="1"
+            step="1"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
-            placeholder="Enter amount (whole number)"
+            placeholder="Enter amount"
             required
           />
         </div>
 
         {/* Date */}
         <div className="flex flex-col">
-          <label className="text-sm font-medium text-gray-400">Date</label>
+          <label className="text-sm font-medium text-gray-400">Date (Optional)</label>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
             className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
-            required
           />
         </div>
 
