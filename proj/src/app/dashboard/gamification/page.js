@@ -18,29 +18,13 @@ const badgeDefinitions = [
   { id: "legacy_keeper", name: "Legacy Keeper", description: "Maintained your budget streak for a full year", points: 5000 }
 ];
 
-const leaderboard = [
-  { name: "Alice", points: 1200 },
-  { name: "Bob", points: 1100 },
-  { name: "Charlie", points: 950 },
-];
-
-// Dummy streak data (✓ for completed, X for missed)
-const streakData = [
-  { day: "Mon", completed: true },
-  { day: "Tue", completed: true },
-  { day: "Wed", completed: false },
-  { day: "Thu", completed: true },
-  { day: "Fri", completed: true },
-  { day: "Sat", completed: true },
-  { day: "Sun", completed: true },
-];
-
 export default function GamificationPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const [achievementData, setAchievementData] = useState(null);
   const [hasCheckedStreak, setHasCheckedStreak] = useState(false);
   const streakCheckedRef = useRef(false);
+  const [leaderboardData, setLeaderboardData] = useState([]);
 
   // Check for and award badges based on current achievements
   const checkAndAwardBadges = async (currentAchievements) => {
@@ -127,6 +111,45 @@ export default function GamificationPage() {
     }
   };
 
+  const fetchLeaderboard = async () => {
+    try {
+      // Fetch achievements joined with user data, ordered by points
+      const { data, error } = await supabase
+        .from('Achievements')
+        .select(`
+          points,
+          streak,
+          User (
+            userid,
+            name,
+            email
+          )
+        `)
+        .order('points', { ascending: false })
+        .limit(10); // Limit to top 10 users
+      
+      if (error) {
+        console.error("Error fetching leaderboard:", error);
+        return;
+      }
+      
+      // Format the data for display
+      const formattedData = data.map(item => ({
+        userId: item.User?.userid,
+        name: item.User?.name || 'Anonymous',
+        points: item.points || 0,
+        streak: item.streak || 0,
+        isCurrentUser: item.User?.userid === user?.id
+      }));
+      
+      setLeaderboardData(formattedData);
+      console.log("Leaderboard data:", formattedData);
+      
+    } catch (err) {
+      console.error("Error in fetchLeaderboard:", err);
+    }
+  };
+
   useEffect(() => {
     // Only run if user exists and we haven't checked already THIS SESSION
     if (user && !streakCheckedRef.current) {
@@ -138,11 +161,18 @@ export default function GamificationPage() {
       const initializeData = async () => {
         await checkAndCreateUserAchievements();
         await updateStreakOnLoad();
+        await fetchLeaderboard(); // Add this to fetch leaderboard on initial load
       };
 
       initializeData();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchLeaderboard();
+    }
+  }, [user, achievementData]);
 
   // Separate function that only runs on page load (doesn't show toasts)
   const updateStreakOnLoad = async () => {
@@ -486,6 +516,9 @@ export default function GamificationPage() {
       // Check for badges after updating streak
       checkAndAwardBadges(updatedData);
 
+      // Refresh the leaderboard
+      await fetchLeaderboard();
+
     } catch (err) {
       console.error("Error updating streak:", err);
       toast.error("An unexpected error occurred");
@@ -553,17 +586,41 @@ export default function GamificationPage() {
           </div>
         </div>
 
-        {/* Leaderboard Section */}
+        {/* Leaderboard Section - Updated to show real data */}
         <div className="bg-gray-700 p-6 rounded-2xl shadow-lg">
           <h2 className="text-xl font-semibold text-white opacity-90 mb-4">Leaderboard</h2>
-          <ul className="divide-y divide-gray-600">
-            {leaderboard.map((user, index) => (
-              <li key={user.name} className="flex justify-between py-2">
-                <span className="text-gray-300">{index + 1}. {user.name}</span>
-                <span className="font-semibold text-white">{user.points} pts</span>
-              </li>
-            ))}
-          </ul>
+          
+          {leaderboardData.length === 0 ? (
+            <p className="text-gray-400 text-center py-4">Loading leaderboard data...</p>
+          ) : (
+            <ul className="divide-y divide-gray-600">
+              {leaderboardData.map((userData, index) => (
+                <li 
+                  key={userData.userId} 
+                  className={`flex justify-between py-3 ${userData.isCurrentUser ? 'bg-gray-600 px-2 rounded-md' : ''}`}
+                >
+                  <div className="flex items-center">
+                    <span className="text-gray-300 mr-2">{index + 1}.</span>
+                    <span className={`${userData.isCurrentUser ? 'text-[#4B7EFF] font-semibold' : 'text-gray-300'}`}>
+                      {userData.name} 
+                      {userData.isCurrentUser && " (You)"}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    {userData.streak > 0 && (
+                      <span className="text-yellow-500 mr-2">🔥 {userData.streak}</span>
+                    )}
+                    <span className="font-semibold text-white">{userData.points} pts</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+          
+          {/* No users message */}
+          {leaderboardData.length === 0 && (
+            <p className="text-gray-400 text-center mt-4">No users on the leaderboard yet. Be the first!</p>
+          )}
         </div>
       </div>
       <ToastContainer />
