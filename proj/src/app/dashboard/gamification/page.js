@@ -345,26 +345,34 @@ export default function GamificationPage() {
         return;
       }
       
-      // Current date with time set to midnight for date comparison
+      // Get dates in YYYY-MM-DD format to ignore time portion
       const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const todayStr = today.toISOString().split('T')[0];
       
-      // Last activity date - using logdate instead of last_activity
-      const lastActivity = data.logdate ? new Date(data.logdate) : null;
-      if (lastActivity) {
-        lastActivity.setHours(0, 0, 0, 0);
+      // Parse logdate as UTC then convert to YYYY-MM-DD
+      const lastActivityDate = data.logdate ? new Date(data.logdate) : null;
+      const lastActivityStr = lastActivityDate ? lastActivityDate.toISOString().split('T')[0] : null;
+      
+      console.log("Today's date:", todayStr);
+      console.log("Last activity date:", lastActivityStr);
+      
+      // Compare as Date objects to get accurate day difference
+      const todayObj = new Date(todayStr);
+      const lastActivityObj = lastActivityStr ? new Date(lastActivityStr) : null;
+      
+      // Calculate day difference properly
+      let diffDays = null;
+      if (lastActivityObj) {
+        // Get time difference in milliseconds and convert to days
+        const diffTime = todayObj.getTime() - lastActivityObj.getTime();
+        diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+        console.log("Days since last activity (rounded):", diffDays);
       }
-      
-      // Calculate time difference in days
-      const diffTime = lastActivity ? today.getTime() - lastActivity.getTime() : null;
-      const diffDays = lastActivity ? diffTime / (1000 * 60 * 60 * 24) : null;
-      
-      console.log("Days since last activity:", diffDays);
       
       let newStreak = 1; // Default to 1 if reset or first time
       
       if (diffDays === 1) {
-        // Last activity was exactly yesterday, increment streak
+        // Last activity was yesterday, increment streak
         newStreak = (data.streak || 0) + 1;
         console.log("Streak continued! New streak:", newStreak);
       } else if (diffDays === 0) {
@@ -376,14 +384,19 @@ export default function GamificationPage() {
         console.log("Streak reset to 1 (previous: " + (data.streak || 0) + ")");
       }
       
-      // Update the achievement record with logdate instead of last_activity
-      const { error: updateError } = await supabase
+      // Get the current timestamp in a consistent format
+      const nowTimestamp = new Date().toISOString();
+      console.log("Updating logdate to:", nowTimestamp);
+      
+      // Update the achievement record
+      const { error: updateError, data: updateData } = await supabase
         .from("Achievements")
         .update({
           streak: newStreak,
-          logdate: new Date().toISOString()
+          logdate: nowTimestamp
         })
-        .eq("userid", user.id);
+        .eq("userid", user.id)
+        .select();
         
       if (updateError) {
         console.error("Error updating streak:", updateError);
@@ -391,11 +404,13 @@ export default function GamificationPage() {
         return;
       }
       
-      // Update local state with logdate instead of last_activity
+      console.log("Database update result:", updateData);
+      
+      // Update local state with the updated data
       const updatedData = {
         ...data,
         streak: newStreak,
-        logdate: new Date().toISOString()
+        logdate: nowTimestamp
       };
       
       setAchievementData(updatedData);
