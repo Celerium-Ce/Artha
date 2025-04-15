@@ -2,8 +2,14 @@
 
 import TransactionForm from './TransactionForm';
 import TransactionList from './TransactionList';
+import { awardBadgeForAction } from '../gamification/page';
 
 export default function TransactionsPage() {
+  const handleExpenseLogging = async (user) => {
+    // After successful expense logging:
+    await awardBadgeForAction(user.id, "expense_tracker");
+  };
+
   return (
     <div
       className="min-h-screen p-6"
@@ -16,7 +22,7 @@ export default function TransactionsPage() {
         <h1 className="text-3xl font-bold text-center text-highlight opacity-90">
           Transactions
         </h1>
-        <TransactionForm />
+        <TransactionForm onExpenseLogged={handleExpenseLogging} />
         <TransactionList />
       </div>
     </div>

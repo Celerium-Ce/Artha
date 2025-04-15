@@ -4,6 +4,9 @@ import { Pie, Bar } from "react-chartjs-2";
 import { CSVLink } from "react-csv";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useAuth } from "@/context/useAuth";
+import { supabase } from "@/lib/supabaseClient";
+import { toast, ToastContainer } from "react-toastify";
 import {
   Chart as ChartJS,
   Title,
@@ -17,7 +20,62 @@ import {
 
 ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale, BarElement);
 
+// Add a direct implementation to award the badge
+const awardInsightBadge = async (userId) => {
+  try {
+    // Get current achievements
+    const { data, error } = await supabase
+      .from("Achievements")
+      .select("badges, points")
+      .eq("userid", userId)
+      .single();
+      
+    if (error) {
+      console.error("Error fetching achievements:", error);
+      return;
+    }
+    
+    // If no achievements record found
+    if (!data) {
+      console.log("No achievements record found");
+      return;
+    }
+    
+    // Check if user already has the badge
+    const currentBadges = Array.isArray(data.badges) ? data.badges : [];
+    if (currentBadges.includes("insight_seeker")) {
+      return; // Already has badge
+    }
+    
+    // Add the badge and points
+    const newBadges = [...currentBadges, "insight_seeker"];
+    const currentPoints = data.points || 0;
+    const newPoints = currentPoints + 60; // Insight Seeker badge is worth 60 points
+    
+    // Update the database
+    const { error: updateError } = await supabase
+      .from("Achievements")
+      .update({ 
+        badges: newBadges,
+        points: newPoints
+      })
+      .eq("userid", userId);
+      
+    if (updateError) {
+      console.error("Error updating badges and points:", updateError);
+      return;
+    }
+    
+    toast.success("🏆 New Badge: Insight Seeker! +60 points");
+    console.log("Insight badge awarded with 60 points");
+    
+  } catch (err) {
+    console.error("Error awarding insight badge:", err);
+  }
+};
+
 const ReportsPage = () => {
+  const { user, loading } = useAuth();
   const transactions = [
     { id: 1, type: "income", category: "Food", amount: 50, date: "2025-01-01" },
     { id: 2, type: "spending", category: "Food", amount: 30, date: "2025-01-01" },
@@ -31,17 +89,31 @@ const ReportsPage = () => {
   const [monthlyData, setMonthlyData] = useState({});
   const [yearlyData, setYearlyData] = useState({});
   const [hasMounted, setHasMounted] = useState(false); // for hydration fix
+  const [hasAwardedBadge, setHasAwardedBadge] = useState(false);
 
   useEffect(() => {
     setHasMounted(true);
-    const calculateTrends = () => {
-      const monthly = { January: 500, February: 600 };
-      const yearly = { 2025: 5000 };
-      setMonthlyData(monthly);
-      setYearlyData(yearly);
+    
+    const initializeReports = async () => {
+      const calculateTrends = () => {
+        const monthly = { January: 500, February: 600 };
+        const yearly = { 2025: 5000 };
+        setMonthlyData(monthly);
+        setYearlyData(yearly);
+      };
+      calculateTrends();
+      
+      // Award the badge when the page loads if user is logged in
+      if (user && !hasAwardedBadge) {
+        await awardInsightBadge(user.id);
+        setHasAwardedBadge(true);
+      }
     };
-    calculateTrends();
-  }, []);
+    
+    if (user) {
+      initializeReports();
+    }
+  }, [user, hasAwardedBadge]);
 
   const categoryData = {
     income: { Food: 100, Rent: 1000, Salary: 2000 },
@@ -69,6 +141,9 @@ const ReportsPage = () => {
       },
     ],
   };
+
+  if (loading) return <p className="text-center p-6">Loading...</p>;
+  if (!user) return <p className="text-center p-6">Please log in to view reports.</p>;
 
   return (
     <div>
@@ -196,6 +271,7 @@ const ReportsPage = () => {
           </button>
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 };
