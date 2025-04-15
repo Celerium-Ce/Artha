@@ -143,7 +143,7 @@ export default function TransactionForm({ accountId, onSuccess, user }) {
       const transactionData = {
         accountid: accountId,
         amount: parseInt(amount, 10), // DB schema uses integer, not float
-        transactionwhen: date, // Match DB field name
+        transactionwhen: new Date(date).toISOString(), // Convert to ISO format
         catid: selectedCategory.catid,
         credit_debit: transactionType // Match DB field name
       };

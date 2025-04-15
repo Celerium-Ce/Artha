@@ -88,18 +88,32 @@ export default function TransactionList({ transactions, onUpdate }) {
         ) : (
           sorted.map((tx) => (
             <div
-              key={tx.transactionid}
+              key={tx.id}
               className="border border-gray-600 p-4 rounded-xl flex justify-between items-center hover:shadow-lg transition"
             >
               <div>
                 <p className="font-semibold text-gray-200">
-                  {tx.type === 'income' ? '+' : '-'}₹{tx.amount}
+                  {tx.type === 'credit' ? '+' : '-'}₹{tx.amount}
                 </p>
-                <p className="text-sm text-gray-400">{new Date(tx.date).toLocaleString()}</p>
-                <p className="text-xs text-gray-500">Category ID: {tx.category}</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-400">
+                    {tx.category}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {tx.date 
+                      ? new Date(tx.date).toLocaleDateString('en-IN', { 
+                          day: 'numeric', 
+                          month: 'short', 
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        }) 
+                      : 'No date'}
+                  </span>
+                </div>
               </div>
               <button
-                onClick={() => handleDelete(tx.transactionid)}
+                onClick={() => handleDelete(tx.id)}
                 className="text-red-600 hover:text-red-400 transition-colors"
               >
                 <Trash2 size={18} />

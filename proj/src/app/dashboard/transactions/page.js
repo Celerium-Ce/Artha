@@ -13,6 +13,7 @@ export default function TransactionsPage() {
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [accountId, setAccountId] = useState(null);
+  const [filterOption, setFilterOption] = useState("all");
 
   // Step 1: Get the account ID
   const getAccountId = async () => {
@@ -44,60 +45,63 @@ export default function TransactionsPage() {
     }
   };
 
-  // Step 2: Fetch transactions
+  // Alternative approach - separate queries
   const fetchTransactions = async () => {
-    if (!user) return;
+    if (!accountId) return;
     
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      console.log("Fetching transactions...");
-      
-      // Get account ID if we don't have it yet
-      const currentAccountId = accountId || await getAccountId();
-      
-      if (!currentAccountId) {
-        console.log("No account ID available");
-        setIsLoading(false);
-        return;
-      }
-      
-      console.log("Using account ID for transactions:", currentAccountId);
-      
-      // Direct query to Transaction table - use exact field names from your database
-      const { data, error } = await supabase
+      // 1. First get transactions
+      const { data: txData, error: txError } = await supabase
         .from('Transaction')
         .select('*')
-        .eq('accountid', currentAccountId);
+        .eq('accountid', accountId)
+        .order('transactionwhen', { ascending: false });
       
-      if (error) {
-        console.error("Error fetching transactions:", error);
-        toast.error("Failed to load transactions");
+      if (txError) {
+        console.error("Error fetching transactions:", txError);
+        toast.error("Could not load your transactions");
         setIsLoading(false);
         return;
       }
       
-      console.log("Raw transactions data:", data);
-      
-      // Map the data to a consistent format
-      const formattedTransactions = Array.isArray(data) ? data.map(item => ({
-        id: item.transactionid,
-        date: item.transactiondate,
-        amount: item.amount,
-        description: item.description || '',
-        category: item.catid,
-        type: item.type
-      })) : [];
-      
-      console.log("Formatted transactions:", formattedTransactions);
-      setTransactions(formattedTransactions);
-      
-      // Award badge if we have transactions
-      if (formattedTransactions.length > 0) {
-        checkAndAwardExpenseBadge();
+      if (!txData || txData.length === 0) {
+        setTransactions([]);
+        setIsLoading(false);
+        return;
       }
+      
+      // 2. Get all categories in one query
+      const catIds = [...new Set(txData.map(tx => tx.catid))];
+      const { data: catData, error: catError } = await supabase
+        .from('Category')
+        .select('catid, catname')
+        .in('catid', catIds);
+      
+      if (catError) {
+        console.error("Error fetching categories:", catError);
+      }
+      
+      // 3. Create a lookup map
+      const categoryMap = {};
+      if (catData) {
+        catData.forEach(cat => {
+          categoryMap[cat.catid] = cat.catname;
+        });
+      }
+      
+      // 4. Format transactions with category names
+      const formattedTransactions = txData.map(tx => ({
+        id: tx.txnid,
+        amount: tx.amount,
+        date: tx.transactionwhen,
+        type: tx.credit_debit,
+        category: categoryMap[tx.catid] || `Category ${tx.catid}`
+      }));
+      
+      setTransactions(formattedTransactions);
     } catch (err) {
       console.error("Error in fetchTransactions:", err);
-      toast.error("An error occurred while fetching transactions");
     } finally {
       setIsLoading(false);
     }
@@ -171,7 +175,6 @@ export default function TransactionsPage() {
     }
   }, [loading, user]);
   
-  // Add this function to your TransactionsPage component
   const updateAccountBalance = async (transactionAmount, transactionType) => {
     if (!accountId || !user) return;
     
@@ -230,7 +233,6 @@ export default function TransactionsPage() {
     }
   };
 
-  // Update your handleTransactionCreated function to include balance updates
   const handleTransactionCreated = (amount, type) => {
     console.log("Transaction created, updating balance and refreshing list");
     
@@ -256,6 +258,18 @@ export default function TransactionsPage() {
           onSuccess={handleTransactionCreated}
           user={user}
         />
+
+        <div className="flex justify-end mb-4">
+          <select
+            className="bg-gray-700 text-gray-300 px-3 py-1 rounded-md"
+            value={filterOption}
+            onChange={(e) => setFilterOption(e.target.value)}
+          >
+            <option value="all">All</option>
+            <option value="credit">Only Credit (Income)</option>
+            <option value="debit">Only Debit (Expense)</option>
+          </select>
+        </div>
         
         {isLoading ? (
           <p className="text-center">Loading transactions...</p>
