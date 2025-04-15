@@ -25,6 +25,7 @@ export default function GamificationPage() {
   const [hasCheckedStreak, setHasCheckedStreak] = useState(false);
   const streakCheckedRef = useRef(false);
   const [leaderboardData, setLeaderboardData] = useState([]);
+  const [leaderboardSort, setLeaderboardSort] = useState('points'); // 'points' or 'streak'
 
   // Check for and award badges based on current achievements
   const checkAndAwardBadges = async (currentAchievements) => {
@@ -111,10 +112,10 @@ export default function GamificationPage() {
     }
   };
 
-  const fetchLeaderboard = async () => {
+  // Modify the fetchLeaderboard function to accept a sort parameter
+  const fetchLeaderboard = async (sortBy = 'points') => {
     try {
-      // Fetch achievements joined with user data, ordered by points
-      // Remove the limit to fetch all users
+      // Fetch achievements joined with user data, ordered by the selected field
       const { data, error } = await supabase
         .from('Achievements')
         .select(`
@@ -126,7 +127,7 @@ export default function GamificationPage() {
             email
           )
         `)
-        .order('points', { ascending: false });
+        .order(sortBy, { ascending: false });
       
       if (error) {
         console.error("Error fetching leaderboard:", error);
@@ -143,7 +144,7 @@ export default function GamificationPage() {
       }));
       
       setLeaderboardData(formattedData);
-      console.log("Leaderboard data:", formattedData);
+      console.log(`Leaderboard data sorted by ${sortBy}:`, formattedData);
       
     } catch (err) {
       console.error("Error in fetchLeaderboard:", err);
@@ -161,7 +162,7 @@ export default function GamificationPage() {
       const initializeData = async () => {
         await checkAndCreateUserAchievements();
         await updateStreakOnLoad();
-        await fetchLeaderboard(); // Add this to fetch leaderboard on initial load
+        await fetchLeaderboard(leaderboardSort); // Add this to fetch leaderboard on initial load
       };
 
       initializeData();
@@ -170,9 +171,14 @@ export default function GamificationPage() {
 
   useEffect(() => {
     if (user) {
-      fetchLeaderboard();
+      fetchLeaderboard(leaderboardSort);
     }
-  }, [user, achievementData]);
+  }, [user, achievementData, leaderboardSort]);
+
+  // Add a handler for switching between sorting options
+  const handleSortChange = (sortOption) => {
+    setLeaderboardSort(sortOption);
+  };
 
   // Separate function that only runs on page load (doesn't show toasts)
   const updateStreakOnLoad = async () => {
@@ -517,7 +523,7 @@ export default function GamificationPage() {
       checkAndAwardBadges(updatedData);
 
       // Refresh the leaderboard
-      await fetchLeaderboard();
+      await fetchLeaderboard(leaderboardSort);
 
     } catch (err) {
       console.error("Error updating streak:", err);
@@ -586,9 +592,37 @@ export default function GamificationPage() {
           </div>
         </div>
 
-        {/* Leaderboard Section - Updated to be scrollable */}
+        {/* Leaderboard Section with Sort Options */}
         <div className="bg-gray-700 p-6 rounded-2xl shadow-lg">
-          <h2 className="text-xl font-semibold text-white opacity-90 mb-4">Leaderboard</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-white opacity-90">Leaderboard</h2>
+            
+            {/* Sorting toggle buttons */}
+            <div className="inline-flex rounded-md shadow-sm" role="group">
+              <button
+                type="button"
+                className={`px-4 py-2 text-sm font-medium rounded-l-lg border ${
+                  leaderboardSort === 'points' 
+                    ? 'bg-[#4B7EFF] text-white border-[#4B7EFF]' 
+                    : 'bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700'
+                }`}
+                onClick={() => handleSortChange('points')}
+              >
+                By Points
+              </button>
+              <button
+                type="button"
+                className={`px-4 py-2 text-sm font-medium rounded-r-lg border ${
+                  leaderboardSort === 'streak' 
+                    ? 'bg-[#4B7EFF] text-white border-[#4B7EFF]' 
+                    : 'bg-gray-800 text-gray-300 border-gray-600 hover:bg-gray-700'
+                }`}
+                onClick={() => handleSortChange('streak')}
+              >
+                By Streak
+              </button>
+            </div>
+          </div>
           
           {leaderboardData.length === 0 ? (
             <p className="text-gray-400 text-center py-4">Loading leaderboard data...</p>
@@ -608,10 +642,28 @@ export default function GamificationPage() {
                       </span>
                     </div>
                     <div className="flex items-center">
-                      {userData.streak > 0 && (
-                        <span className="text-yellow-500 mr-2">🔥 {userData.streak}</span>
+                      {/* Show different primary metric based on sort type */}
+                      {leaderboardSort === 'streak' ? (
+                        <>
+                          <span className="text-yellow-500 mr-2 font-bold">
+                            🔥 {userData.streak}
+                          </span>
+                          <span className="text-gray-400 text-sm">
+                            ({userData.points} pts)
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-semibold text-white">
+                            {userData.points} pts
+                          </span>
+                          {userData.streak > 0 && (
+                            <span className="text-yellow-500 ml-2">
+                              🔥 {userData.streak}
+                            </span>
+                          )}
+                        </>
                       )}
-                      <span className="font-semibold text-white">{userData.points} pts</span>
                     </div>
                   </li>
                 ))}
