@@ -171,9 +171,73 @@ export default function TransactionsPage() {
     }
   }, [loading, user]);
   
-  // Callback for when a transaction is created
-  const handleTransactionCreated = () => {
-    console.log("Transaction created, refreshing list");
+  // Add this function to your TransactionsPage component
+  const updateAccountBalance = async (transactionAmount, transactionType) => {
+    if (!accountId || !user) return;
+    
+    try {
+      console.log("Updating account balance for transaction:", {
+        amount: transactionAmount,
+        type: transactionType
+      });
+      
+      // First get current account balance
+      const { data: accountData, error: accountError } = await supabase
+        .from('Account')
+        .select('balance')
+        .eq('accountid', accountId)
+        .single();
+        
+      if (accountError) {
+        console.error("Error fetching account balance:", accountError);
+        toast.error("Failed to update account balance");
+        return;
+      }
+      
+      // Calculate new balance based on transaction type
+      const currentBalance = accountData.balance || 0;
+      let newBalance = currentBalance;
+      
+      if (transactionType === 'credit') {
+        newBalance = currentBalance + parseInt(transactionAmount, 10);
+      } else if (transactionType === 'debit') {
+        newBalance = currentBalance - parseInt(transactionAmount, 10);
+      }
+      
+      console.log("Balance update:", {
+        currentBalance,
+        newBalance,
+        difference: newBalance - currentBalance
+      });
+      
+      // Update account with new balance
+      const { error: updateError } = await supabase
+        .from('Account')
+        .update({ balance: newBalance })
+        .eq('accountid', accountId);
+        
+      if (updateError) {
+        console.error("Error updating account balance:", updateError);
+        toast.error("Failed to update account balance");
+        return;
+      }
+      
+      console.log("Account balance updated successfully to:", newBalance);
+      
+    } catch (err) {
+      console.error("Error in updateAccountBalance:", err);
+      toast.error("An error occurred while updating balance");
+    }
+  };
+
+  // Update your handleTransactionCreated function to include balance updates
+  const handleTransactionCreated = (amount, type) => {
+    console.log("Transaction created, updating balance and refreshing list");
+    
+    // Update the balance
+    updateAccountBalance(amount, type);
+    
+    // Refresh the transactions list
     fetchTransactions();
   };
 

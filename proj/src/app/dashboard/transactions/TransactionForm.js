@@ -173,7 +173,9 @@ export default function TransactionForm({ accountId, onSuccess, user }) {
       // Keep the transaction type and date as they are for convenience
       
       // Notify parent component to refresh data
-      if (onSuccess) onSuccess();
+      if (onSuccess) {
+        onSuccess(amount, transactionType);
+      }
       
     } catch (err) {
       console.error('Exception submitting transaction:', err);
