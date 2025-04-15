@@ -20,6 +20,60 @@ import {
 
 ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale, BarElement);
 
+// Add a direct implementation to award the badge
+const awardInsightBadge = async (userId) => {
+  try {
+    // Get current achievements
+    const { data, error } = await supabase
+      .from("Achievements")
+      .select("badges, points")
+      .eq("userid", userId)
+      .single();
+      
+    if (error) {
+      console.error("Error fetching achievements:", error);
+      return;
+    }
+    
+    // If no achievements record found
+    if (!data) {
+      console.log("No achievements record found");
+      return;
+    }
+    
+    // Check if user already has the badge
+    const currentBadges = Array.isArray(data.badges) ? data.badges : [];
+    if (currentBadges.includes("insight_seeker")) {
+      return; // Already has badge
+    }
+    
+    // Add the badge and points
+    const newBadges = [...currentBadges, "insight_seeker"];
+    const currentPoints = data.points || 0;
+    const newPoints = currentPoints + 60; // Insight Seeker badge is worth 60 points
+    
+    // Update the database
+    const { error: updateError } = await supabase
+      .from("Achievements")
+      .update({ 
+        badges: newBadges,
+        points: newPoints
+      })
+      .eq("userid", userId);
+      
+    if (updateError) {
+      console.error("Error updating badges and points:", updateError);
+      return;
+    }
+    
+    toast.success("🏆 New Badge: Insight Seeker! +60 points");
+    console.log("Insight badge awarded with 60 points");
+    
+  } catch (err) {
+    console.error("Error awarding insight badge:", err);
+  }
+};
+
 const ReportsPage = () => {
   const { user, loading } = useAuth();
   const transactions = [
@@ -37,61 +91,27 @@ const ReportsPage = () => {
   const [hasMounted, setHasMounted] = useState(false); // for hydration fix
   const [hasAwardedBadge, setHasAwardedBadge] = useState(false);
 
-  const checkAndAwardInsightBadge = async () => {
-    if (!user || hasAwardedBadge) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("Achievements")
-        .select("badges")
-        .eq("userid", user.id)
-        .single();
-
-      if (error) {
-        console.error("Error checking achievements:", error);
-        return;
-      }
-
-      if (!data || !data.badges) {
-        console.log("No achievements record found");
-        return;
-      }
-
-      if (Array.isArray(data.badges) && !data.badges.includes("insight_seeker")) {
-        const newBadges = [...data.badges, "insight_seeker"];
-
-        const { error: updateError } = await supabase
-          .from("Achievements")
-          .update({ badges: newBadges })
-          .eq("userid", user.id);
-
-        if (updateError) {
-          console.error("Error awarding badge:", updateError);
-          return;
-        }
-
-        setHasAwardedBadge(true);
-        toast.success("🏆 New Badge: Insight Seeker! You've viewed your first financial report.");
-      } else {
-        setHasAwardedBadge(true);
-      }
-    } catch (err) {
-      console.error("Error in badge check:", err);
-    }
-  };
-
   useEffect(() => {
     setHasMounted(true);
-    const calculateTrends = () => {
-      const monthly = { January: 500, February: 600 };
-      const yearly = { 2025: 5000 };
-      setMonthlyData(monthly);
-      setYearlyData(yearly);
+    
+    const initializeReports = async () => {
+      const calculateTrends = () => {
+        const monthly = { January: 500, February: 600 };
+        const yearly = { 2025: 5000 };
+        setMonthlyData(monthly);
+        setYearlyData(yearly);
+      };
+      calculateTrends();
+      
+      // Award the badge when the page loads if user is logged in
+      if (user && !hasAwardedBadge) {
+        await awardInsightBadge(user.id);
+        setHasAwardedBadge(true);
+      }
     };
-    calculateTrends();
-
-    if (user && !hasAwardedBadge) {
-      checkAndAwardInsightBadge();
+    
+    if (user) {
+      initializeReports();
     }
   }, [user, hasAwardedBadge]);
 

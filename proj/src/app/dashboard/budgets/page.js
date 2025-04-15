@@ -7,7 +7,7 @@ import BudgetList from './BudgetList';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
+import { ToastContainer } from 'react-toastify';
 // Remove the direct import from gamification page to avoid potential circular dependencies
 
 const catName = async (id) => {
@@ -17,6 +17,60 @@ const catName = async (id) => {
     return 'Unknown'; // fallback
   }
   return data;
+};
+
+// Create a utility function to award badges directly
+const awardBudgetBadge = async (userId) => {
+  try {
+    // Get current achievements
+    const { data, error } = await supabase
+      .from("Achievements")
+      .select("badges, points")
+      .eq("userid", userId)
+      .single();
+      
+    if (error) {
+      console.error("Error fetching achievements:", error);
+      return;
+    }
+    
+    // If no achievements record found
+    if (!data) {
+      console.log("No achievements record found");
+      return;
+    }
+    
+    // Check if user already has the badge
+    const currentBadges = Array.isArray(data.badges) ? data.badges : [];
+    if (currentBadges.includes("budget_initiate")) {
+      return; // Already has badge
+    }
+    
+    // Add the badge and points
+    const newBadges = [...currentBadges, "budget_initiate"];
+    const currentPoints = data.points || 0;
+    const newPoints = currentPoints + 75; // Budget Initiate badge is worth 75 points
+    
+    // Update the database
+    const { error: updateError } = await supabase
+      .from("Achievements")
+      .update({ 
+        badges: newBadges,
+        points: newPoints
+      })
+      .eq("userid", userId);
+      
+    if (updateError) {
+      console.error("Error updating badges and points:", updateError);
+      return;
+    }
+    
+    toast.success("🏆 New Badge: Budget Initiate! +75 points");
+    console.log("Budget badge awarded with 75 points");
+    
+  } catch (err) {
+    console.error("Error awarding budget badge:", err);
+  }
 };
 
 export default function BudgetPage() {
@@ -40,51 +94,6 @@ export default function BudgetPage() {
     return data;
   };
   
-  // Check if user has achievement and award it if not
-  const checkAndAwardBudgetBadge = async () => {
-    if (!user) return;
-    
-    try {
-      // First, check if user has an achievements record
-      const { data, error } = await supabase
-        .from("Achievements")
-        .select("badges")
-        .eq("userid", user.id)
-        .single();
-        
-      if (error) {
-        console.error("Error checking achievements:", error);
-        return;
-      }
-      
-      // If no achievements record or no badges array, create achievements record
-      if (!data || !data.badges) {
-        console.log("No achievements record found");
-        return; // User needs to visit gamification page first
-      }
-      
-      // Check if user already has the badge
-      if (Array.isArray(data.badges) && !data.badges.includes("budget_initiate")) {
-        // User doesn't have the badge, award it
-        const newBadges = [...data.badges, "budget_initiate"];
-        
-        const { error: updateError } = await supabase
-          .from("Achievements")
-          .update({ badges: newBadges })
-          .eq("userid", user.id);
-          
-        if (updateError) {
-          console.error("Error awarding badge:", updateError);
-          return;
-        }
-        
-        toast.success("🏆 New Badge: Budget Initiate! You've created your first budget.");
-      }
-    } catch (err) {
-      console.error("Error in badge check:", err);
-    }
-  };
-
   const fetchBudgets = async () => {
     let accountID = await getAccountID();
     const { data, error } = await supabase.rpc('get_budget_by_account', {
@@ -114,11 +123,6 @@ export default function BudgetPage() {
       })
     );
     setBudgets(enrichedBudgets);
-    
-    // If budgets exist now, check and award the badge
-    if (enrichedBudgets.length > 0) {
-      checkAndAwardBudgetBadge();
-    }
   }
 
   useEffect(() => {
@@ -131,7 +135,10 @@ export default function BudgetPage() {
   // Function to pass to BudgetForm that will be called after budget creation
   const handleBudgetCreated = async () => {
     await fetchBudgets(); // Update the budgets list
-    await checkAndAwardBudgetBadge(); // Check and award the badge
+    
+    if (user) {
+      await awardBudgetBadge(user.id);
+    }
   };
 
   if (loading) return <p>Loading...</p>;
@@ -157,7 +164,7 @@ export default function BudgetPage() {
           getID={getAccountID} 
         />
         <BudgetList budgets={budgets} setBudgets={setBudgets} transactions={[]} />
-        {/* Removed the test button */}
+        <ToastContainer /> {/* Make sure this is added */}
       </div>
     </div>
   );

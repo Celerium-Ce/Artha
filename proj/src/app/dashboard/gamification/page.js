@@ -682,7 +682,7 @@ export default function GamificationPage() {
   );
 }
 
-// Update the awardBadgeForAction function to award points too
+// Make sure this is at the bottom of the file
 export const awardBadgeForAction = async (userId, badgeId) => {
   if (!userId || !badgeId) return false;
 
