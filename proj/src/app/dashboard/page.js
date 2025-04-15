@@ -3,12 +3,16 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../../context/useAuth";
 import { supabase } from "../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
-import LogoutButton from "../components/logoutButton"; // correct the path as needed
+import LogoutButton from "../components/logoutButton";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function DashboardPage() {
     const { user, loading } = useAuth();
     const router = useRouter();
     const [userData, setUserData] = useState(null);
+    const [accountData, setAccountData] = useState(null);
+    const [isCheckingAccount, setIsCheckingAccount] = useState(false);
 
     const getData = async () => {
         const { data, error } = await supabase.from("User").select("*").eq("userid", user.id);
@@ -17,6 +21,73 @@ export default function DashboardPage() {
             return;
         }
         setUserData(data[0]);
+        
+        // Also check if user has any accounts
+        checkForAccount(false);
+    };
+    
+    const checkForAccount = async (showToasts = true) => {
+        if (!user) return;
+        
+        setIsCheckingAccount(true);
+        
+        try {
+            // Check if user has an account
+            const { data, error } = await supabase
+                .from("Account")
+                .select("*")
+                .eq("userid", user.id);
+                
+            if (error) {
+                console.error("Error checking account:", error.message);
+                if (showToasts) toast.error(`Error checking account: ${error.message}`);
+                setIsCheckingAccount(false);
+                return;
+            }
+            
+            if (!data || data.length === 0) {
+                if (showToasts) toast.info("No account found. Creating a default account...");
+                
+                // Use conventional insert instead of RPC
+                const { error: createError } = await supabase
+                    .from("Account")
+                    .insert([{
+                        balance: 0,
+                        type: "Family",
+                        userid: user.id,
+                    }]);
+                
+                if (createError) {
+                    console.error("Error creating account:", createError);
+                    if (showToasts) toast.error(`Error creating account: ${createError.message}`);
+                    setIsCheckingAccount(false);
+                    return;
+                }
+                
+                // Fetch the newly created account
+                const { data: newAccount, error: fetchError } = await supabase
+                    .from("Account")
+                    .select("*")
+                    .eq("userid", user.id);
+                    
+                if (fetchError) {
+                    console.error("Error fetching new account:", fetchError.message);
+                    setIsCheckingAccount(false);
+                    return;
+                }
+                
+                setAccountData(newAccount);
+                if (showToasts) toast.success("Default account created successfully!");
+            } else {
+                setAccountData(data);
+                if (showToasts) toast.info("You already have an account!");
+            }
+        } catch (err) {
+            console.error("Unexpected error:", err);
+            if (showToasts) toast.error("An unexpected error occurred");
+        } finally {
+            setIsCheckingAccount(false);
+        }
     };
 
     useEffect(() => {
@@ -35,7 +106,34 @@ export default function DashboardPage() {
                     <LogoutButton />
                 </div>
 
-                {/* ✅ ARTHA title and tagline added below */}
+                {/* Account check button */}
+                <div className="mb-8 flex justify-center">
+                    <button
+                        onClick={() => checkForAccount(true)}
+                        disabled={isCheckingAccount}
+                        className="px-6 py-3 rounded-xl text-white font-medium shadow-md bg-[#4B7EFF] hover:bg-opacity-90 transition-all duration-200 disabled:opacity-70"
+                    >
+                        {isCheckingAccount ? "Checking Account..." : "Check/Create Account"}
+                    </button>
+                </div>
+
+                {/* Account information */}
+                {accountData && accountData.length > 0 && (
+                    <div className="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
+                        <h2 className="text-2xl font-bold text-white mb-4">Your Accounts</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {accountData.map(account => (
+                                <div key={account.id} className="bg-gray-700 p-4 rounded-lg">
+                                    <h3 className="text-xl font-semibold text-[#4B7EFF]">{account.name || "Default Account"}</h3>
+                                    <p className="text-gray-300">Balance: ${account.balance?.toFixed(2) || "0.00"}</p>
+                                    <p className="text-gray-400 text-sm">Type: {account.accounttype || account.type || "Standard"}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* ARTHA title and tagline */}
                 <div className="text-center mb-12">
                     <h1 className="text-5xl font-extrabold text-white mb-4">ARTHA</h1>
                     <p className="text-lg text-gray-400">
@@ -55,6 +153,7 @@ export default function DashboardPage() {
                     <p>&copy; {new Date().getFullYear()} Artha - All Rights Reserved</p>
                 </footer>
             </div>
+            <ToastContainer />
         </div>
     );
 }

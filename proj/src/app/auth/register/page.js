@@ -73,6 +73,20 @@ export default function Register() {
         setLoading(false);
         return;
       }
+
+      // Use RPC call to create account instead of direct insertion
+      const { error: accountError } = await supabase.rpc('insert_account', {
+        user_id: user.id
+      });
+
+      if (accountError) {
+        console.error('Error creating account:', accountError);
+        setError(accountError.message);
+        setLoading(false);
+        return;
+      }
+      
+      toast.success("Account created successfully!");
     }
 
     setLoading(false);
