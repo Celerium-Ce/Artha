@@ -12,10 +12,10 @@ export default function Transactions() {
 
   useEffect(() => {
     const fetchedTransactions = [
-      { txnID: 1, accountID: 1, timeStamp: '2025-04-10', amount: 500, type: 'debit', category: 'Food' },
-      { txnID: 2, accountID: 2, timeStamp: '2025-04-09', amount: 1500, type: 'credit', category: 'Salary' },
-      { txnID: 3, accountID: 3, timeStamp: '2025-04-08', amount: 200, type: 'debit', category: 'Entertainment' },
-      { txnID: 4, accountID: 1, timeStamp: '2025-04-07', amount: 5000, type: 'credit', category: 'Refund' },
+      { txnID: 1, accountid: 1, timeStamp: '2025-04-10', amount: 500, type: 'debit', category: 'Food' },
+      { txnID: 2, accountid: 2, timeStamp: '2025-04-09', amount: 1500, type: 'credit', category: 'Salary' },
+      { txnID: 3, accountid: 3, timeStamp: '2025-04-08', amount: 200, type: 'debit', category: 'Entertainment' },
+      { txnID: 4, accountid: 1, timeStamp: '2025-04-07', amount: 5000, type: 'credit', category: 'Refund' },
     ];
     setTransactions(fetchedTransactions);
     setFilteredTransactions(fetchedTransactions);
@@ -121,7 +121,7 @@ export default function Transactions() {
               filteredTransactions.map((txn) => (
                 <tr key={txn.txnID} className="border-t border-gray-600">
                   <td className="px-4 py-2">{txn.txnID}</td>
-                  <td className="px-4 py-2">{txn.accountID}</td>
+                  <td className="px-4 py-2">{txn.accountid}</td>
                   <td className="px-4 py-2">{txn.timeStamp}</td>
                   <td className="px-4 py-2">₹{txn.amount}</td>
                   <td className="px-4 py-2">{txn.type}</td>

@@ -9,9 +9,9 @@ export default function Accounts() {
   useEffect(() => {
     // Dummy data for now
     const fetchedAccounts = [
-      { accountID: 1, balance: 5000, type: 'Savings', users: 1 },
-      { accountID: 2, balance: 15000, type: 'Checking', users: 1 },
-      { accountID: 3, balance: 2000, type: 'Savings', users: 1 },
+      { accountid: 1, balance: 5000, type: 'Savings', users: 1 },
+      { accountid: 2, balance: 15000, type: 'Checking', users: 1 },
+      { accountid: 3, balance: 2000, type: 'Savings', users: 1 },
     ];
     setAccounts(fetchedAccounts);
   }, []);
@@ -21,12 +21,28 @@ export default function Accounts() {
     setAccounts(sorted);
   };
 
-  const handleDelete = (accountID) => {
-    const confirmed = window.confirm('Are you sure you want to delete this account? This will affect all associated data.');
+  const handleDelete = async (txnid) => {
+    const confirmed = window.confirm('Are you sure you want to delete this transaction? This will affect associated data.');
     if (confirmed) {
-      setAccounts((prev) => prev.filter((account) => account.accountID !== accountID));
+      // Delete from database (Supabase)
+      const { error } = await supabase
+        .from('transactions')  // Ensure you're targeting the correct table
+        .delete()
+        .eq('txnid', txnid);  // Use txnid to delete the transaction with that ID
+  
+      if (error) {
+        console.error('Error deleting transaction:', error.message);
+        alert('Failed to delete the transaction.');
+        return;
+      }
+  
+      // Optionally, remove it from your local state (UI) as well
+      setTransactions((prev) => prev.filter((transaction) => transaction.id !== txnid));
+  
+      alert('Transaction deleted successfully!');
     }
   };
+  
 
   useEffect(() => {
     sortAccounts(sortOrder); // Sort when sortOrder changes
@@ -67,14 +83,14 @@ export default function Accounts() {
               </tr>
             ) : (
               accounts.map((account) => (
-                <tr key={account.accountID} className="border-t border-gray-600">
-                  <td className="px-4 py-2">{account.accountID}</td>
+                <tr key={account.accountid} className="border-t border-gray-600">
+                  <td className="px-4 py-2">{account.accountid}</td>
                   <td className="px-4 py-2">₹{account.balance}</td>
                   <td className="px-4 py-2">{account.type}</td>
                   <td className="px-4 py-2">{account.users}</td>
                   <td className="px-4 py-2">
                     <button
-                      onClick={() => handleDelete(account.accountID)}
+                      onClick={() => handleDelete(account.accountid)}
                       className="bg-red-600 text-white px-4 py-1 rounded hover:bg-red-500 transition"
                     >
                       Delete

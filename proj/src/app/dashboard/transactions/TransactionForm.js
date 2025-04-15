@@ -1,23 +1,73 @@
-import { useState } from "react";
+'use client';
 
-const categories = ["Salary", "Groceries", "Rent", "Utilities"];
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 
-export default function TransactionForm() {
-  const [category, setCategory] = useState(categories[0]);
-  const [amount, setAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("Cash");
-  const [transactionType, setTransactionType] = useState("income"); // Income or Expense
-  const [timestamp, setTimestamp] = useState("");
+const accountid = 12; // Assuming the account ID is static for now
 
-  const handleSubmit = (e) => {
+export default function TransactionForm({ fetchTransactions }) {
+  const [category, setCategory] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [amount, setAmount] = useState('');
+  const [transactionType, setTransactionType] = useState('credit');
+  const [timestamp, setTimestamp] = useState('');
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const { data, error } = await supabase
+        .from('Category')
+        .select('catid, catname')
+        .order('catname', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching categories:', error.message);
+      } else {
+        setCategories(data);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission logic
-    console.log({ transactionType, category, amount, paymentMethod, timestamp });
+    if (!category || !amount || !transactionType || !timestamp) return;
+
+    const parsedAmount = parseFloat(amount);
+    const parsedTimestamp = new Date(timestamp).toISOString();
+    const castedTransactionType = transactionType === 'credit' ? 'credit' : 'debit';
+
+    const selectedCategory = categories.find((c) => c.catname === category);
+    if (!selectedCategory) {
+      alert('Invalid category selected.');
+      return;
+    }
+
+    const { error: insertError } = await supabase
+      .from('Transaction')
+      .insert([{
+        accountid: accountid,
+        amount: parsedAmount,
+        transactionWhen: parsedTimestamp,
+        catid: selectedCategory.catid,
+        credit_debit: castedTransactionType,
+      }]);
+
+    if (insertError) {
+      console.error('Failed to add transaction:', insertError.message);
+      alert('Failed to save transaction. Please try again.');
+    } else {
+      await fetchTransactions();
+      setCategory('');
+      setAmount('');
+      setTransactionType('credit');
+      setTimestamp('');
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="bg-gray-800 p-6 rounded-2xl shadow-lg">
-      <h2 className="text-3xl font-semibold text-white opacity-90 mb-4">
+      <h2 className="text-3xl font-semibold text-[#4B7EFF] opacity-90 mb-4">
         Add Transaction
       </h2>
       <div className="space-y-4">
@@ -29,8 +79,8 @@ export default function TransactionForm() {
             className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
             required
           >
-            <option value="income">Income</option>
-            <option value="expense">Expense</option>
+            <option value="credit">Credit</option>
+            <option value="debit">Debit</option>
           </select>
         </div>
 
@@ -42,9 +92,10 @@ export default function TransactionForm() {
             className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
             required
           >
+            <option value="">Select a category</option>
             {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
+              <option key={cat.catid} value={cat.catname}>
+                {cat.catname}
               </option>
             ))}
           </select>
@@ -57,22 +108,9 @@ export default function TransactionForm() {
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
+            placeholder="Transaction amount"
             required
           />
-        </div>
-
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-gray-400">Payment Method</label>
-          <select
-            value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value)}
-            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
-            required
-          >
-            <option value="Cash">Cash</option>
-            <option value="UPI">UPI</option>
-            <option value="Bank Transfer">Bank Transfer</option>
-          </select>
         </div>
 
         <div className="flex flex-col">
@@ -88,9 +126,9 @@ export default function TransactionForm() {
 
         <button
           type="submit"
-          className="mt-4 bg-[#4B7EFF] text-white rounded-xl py-2 px-4 w-full hover:bg-[#4B7EFF] transition-colors"
+          className="mt-4 bg-[#4B7EFF] text-gray-900 rounded-xl py-2 px-4 w-full hover:bg-[#4B7EFF] transition-colors"
         >
-          Add Transaction
+          Save Transaction
         </button>
       </div>
     </form>
