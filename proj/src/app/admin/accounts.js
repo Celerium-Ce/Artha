@@ -1,52 +1,91 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function Accounts() {
   const [accounts, setAccounts] = useState([]);
-  const [sortOrder, setSortOrder] = useState('asc'); // asc or desc for sorting balance
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [loading, setLoading] = useState(true);
+
+  const fetchAccounts = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('Account')
+      .select(`
+        accountid,
+        balance,
+        type,
+        userid,
+        User!Account_userid_fkey (
+          name,
+          email
+        )
+      `);
+
+    if (error) {
+      console.error('Error fetching accounts:', error.message);
+      alert('Failed to fetch accounts');
+      return;
+    }
+
+    const formattedAccounts = data.map(account => ({
+      accountid: account.accountid,
+      balance: parseFloat(account.balance),
+      type: account.type,
+      userName: account.User.name,
+      userEmail: account.User.email
+    }));
+
+    setAccounts(formattedAccounts);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    // Dummy data for now
-    const fetchedAccounts = [
-      { accountid: 1, balance: 5000, type: 'Savings', users: 1 },
-      { accountid: 2, balance: 15000, type: 'Checking', users: 1 },
-      { accountid: 3, balance: 2000, type: 'Savings', users: 1 },
-    ];
-    setAccounts(fetchedAccounts);
+    fetchAccounts();
   }, []);
 
   const sortAccounts = (order) => {
-    const sorted = [...accounts].sort((a, b) => (order === 'asc' ? a.balance - b.balance : b.balance - a.balance));
+    const sorted = [...accounts].sort((a, b) => 
+      order === 'asc' ? a.balance - b.balance : b.balance - a.balance
+    );
     setAccounts(sorted);
   };
 
-  const handleDelete = async (txnid) => {
-    const confirmed = window.confirm('Are you sure you want to delete this transaction? This will affect associated data.');
+  const handleDelete = async (accountId) => {
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this account? This will delete all associated transactions and budgets.'
+    );
+
     if (confirmed) {
-      // Delete from database (Supabase)
       const { error } = await supabase
-        .from('transactions')  // Ensure you're targeting the correct table
+        .from('Account')
         .delete()
-        .eq('txnid', txnid);  // Use txnid to delete the transaction with that ID
-  
+        .eq('accountid', accountId);
+
       if (error) {
-        console.error('Error deleting transaction:', error.message);
-        alert('Failed to delete the transaction.');
+        console.error('Error deleting account:', error.message);
+        alert('Failed to delete the account.');
         return;
       }
-  
-      // Optionally, remove it from your local state (UI) as well
-      setTransactions((prev) => prev.filter((transaction) => transaction.id !== txnid));
-  
-      alert('Transaction deleted successfully!');
+
+      // Refresh accounts list
+      fetchAccounts();
+      alert('Account deleted successfully!');
     }
   };
-  
 
   useEffect(() => {
-    sortAccounts(sortOrder); // Sort when sortOrder changes
+    sortAccounts(sortOrder);
   }, [sortOrder]);
+
+  if (loading) {
+    return (
+      <div className="p-6 bg-gray-800 text-gray-200 text-center">
+        Loading accounts...
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 bg-gray-800 text-gray-200 rounded-2xl border-none shadow-none max-w-4xl mx-auto">
@@ -70,7 +109,7 @@ export default function Accounts() {
               <th className="px-4 py-2">Account ID</th>
               <th className="px-4 py-2">Balance</th>
               <th className="px-4 py-2">Type</th>
-              <th className="px-4 py-2">Total Users</th>
+              <th className="px-4 py-2">User</th>
               <th className="px-4 py-2">Actions</th>
             </tr>
           </thead>
@@ -85,9 +124,12 @@ export default function Accounts() {
               accounts.map((account) => (
                 <tr key={account.accountid} className="border-t border-gray-600">
                   <td className="px-4 py-2">{account.accountid}</td>
-                  <td className="px-4 py-2">₹{account.balance}</td>
+                  <td className="px-4 py-2">₹{account.balance.toFixed(2)}</td>
                   <td className="px-4 py-2">{account.type}</td>
-                  <td className="px-4 py-2">{account.users}</td>
+                  <td className="px-4 py-2">
+                    {account.userName}<br/>
+                    <span className="text-gray-400 text-xs">{account.userEmail}</span>
+                  </td>
                   <td className="px-4 py-2">
                     <button
                       onClick={() => handleDelete(account.accountid)}
