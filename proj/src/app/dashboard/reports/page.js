@@ -4,6 +4,9 @@ import { Pie, Bar } from "react-chartjs-2";
 import { CSVLink } from "react-csv";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useAuth } from "@/context/useAuth";
+import { supabase } from "@/lib/supabaseClient";
+import { toast, ToastContainer } from "react-toastify";
 import {
   Chart as ChartJS,
   Title,
@@ -14,11 +17,11 @@ import {
   LinearScale,
   BarElement,
 } from "chart.js";
-import { awardBadgeForAction } from '../gamification/page';
 
 ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale, BarElement);
 
 const ReportsPage = () => {
+  const { user, loading } = useAuth();
   const transactions = [
     { id: 1, type: "income", category: "Food", amount: 50, date: "2025-01-01" },
     { id: 2, type: "spending", category: "Food", amount: 30, date: "2025-01-01" },
@@ -32,6 +35,50 @@ const ReportsPage = () => {
   const [monthlyData, setMonthlyData] = useState({});
   const [yearlyData, setYearlyData] = useState({});
   const [hasMounted, setHasMounted] = useState(false); // for hydration fix
+  const [hasAwardedBadge, setHasAwardedBadge] = useState(false);
+
+  const checkAndAwardInsightBadge = async () => {
+    if (!user || hasAwardedBadge) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("Achievements")
+        .select("badges")
+        .eq("userid", user.id)
+        .single();
+
+      if (error) {
+        console.error("Error checking achievements:", error);
+        return;
+      }
+
+      if (!data || !data.badges) {
+        console.log("No achievements record found");
+        return;
+      }
+
+      if (Array.isArray(data.badges) && !data.badges.includes("insight_seeker")) {
+        const newBadges = [...data.badges, "insight_seeker"];
+
+        const { error: updateError } = await supabase
+          .from("Achievements")
+          .update({ badges: newBadges })
+          .eq("userid", user.id);
+
+        if (updateError) {
+          console.error("Error awarding badge:", updateError);
+          return;
+        }
+
+        setHasAwardedBadge(true);
+        toast.success("🏆 New Badge: Insight Seeker! You've viewed your first financial report.");
+      } else {
+        setHasAwardedBadge(true);
+      }
+    } catch (err) {
+      console.error("Error in badge check:", err);
+    }
+  };
 
   useEffect(() => {
     setHasMounted(true);
@@ -43,10 +90,10 @@ const ReportsPage = () => {
     };
     calculateTrends();
 
-    // When a user views a financial report:
-    const user = { id: 123 }; // Example user object
-    awardBadgeForAction(user.id, "insight_seeker");
-  }, []);
+    if (user && !hasAwardedBadge) {
+      checkAndAwardInsightBadge();
+    }
+  }, [user, hasAwardedBadge]);
 
   const categoryData = {
     income: { Food: 100, Rent: 1000, Salary: 2000 },
@@ -74,6 +121,9 @@ const ReportsPage = () => {
       },
     ],
   };
+
+  if (loading) return <p className="text-center p-6">Loading...</p>;
+  if (!user) return <p className="text-center p-6">Please log in to view reports.</p>;
 
   return (
     <div>
@@ -201,6 +251,7 @@ const ReportsPage = () => {
           </button>
         </div>
       </div>
+      <ToastContainer />
     </div>
   );
 };
