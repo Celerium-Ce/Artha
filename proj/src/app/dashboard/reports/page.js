@@ -14,6 +14,7 @@ import {
   LinearScale,
   BarElement,
 } from "chart.js";
+import { awardBadgeForAction } from '../dashboard/gamification/page';
 
 ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale, BarElement);
 
@@ -41,6 +42,10 @@ const ReportsPage = () => {
       setYearlyData(yearly);
     };
     calculateTrends();
+
+    // When a user views a financial report:
+    const user = { id: 123 }; // Example user object
+    awardBadgeForAction(user.id, "insight_seeker");
   }, []);
 
   const categoryData = {

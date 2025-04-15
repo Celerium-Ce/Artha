@@ -5,6 +5,7 @@ import { useAuth } from '@/context/useAuth';
 import BudgetForm from './BudgetForm';
 import BudgetList from './BudgetList';
 import { supabase } from '@/lib/supabaseClient';
+import { awardBadgeForAction } from '../gamification/page';
 
 const catName = async (id) => {
   const { data, error } = await supabase.rpc('get_category_name', { _catid: id });
@@ -93,6 +94,18 @@ export default function BudgetPage() {
         </h1>
         <BudgetForm setBudgets={setBudgets} categories={categories} fetchBudgets={fetchBudgets} getID={getAccountID} />
         <BudgetList budgets={budgets} setBudgets={setBudgets} transactions={[]} />
+        {/* After successful budget creation: */}
+        {user && (
+          <div>
+            <button
+              onClick={async () => {
+                await awardBadgeForAction(user.id, "budget_initiate");
+              }}
+            >
+              Award Badge
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

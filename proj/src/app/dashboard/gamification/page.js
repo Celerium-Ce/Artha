@@ -6,9 +6,17 @@ import { supabase } from "../../../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import LogoutButton from "../../components/logoutButton";
 import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const badges = [
-  "First Steps", "Budget Beginner", "Transaction Logged", "Budget Master"
+// Replace static badges with detailed badge definitions
+const badgeDefinitions = [
+  { id: "first_step", name: "First Step", description: "Logged into the app for the first time" },
+  { id: "budget_initiate", name: "Budget Initiate", description: "Created your first budget" },
+  { id: "expense_tracker", name: "Expense Tracker", description: "Logged your first expense" },
+  { id: "insight_seeker", name: "Insight Seeker", description: "Viewed your first financial report" },
+  { id: "daily_streaker", name: "Daily Streaker", description: "Checked in for 7 consecutive days" },
+  { id: "consistency_champ", name: "Consistency Champ", description: "Maintained a budget streak for 30 days" },
+  { id: "legacy_keeper", name: "Legacy Keeper", description: "Maintained your budget streak for a full year" }
 ];
 
 const leaderboard = [
@@ -33,6 +41,77 @@ export default function GamificationPage() {
   const router = useRouter();
   const [achievementData, setAchievementData] = useState(null);
   const [hasCheckedStreak, setHasCheckedStreak] = useState(false);
+  
+  // Check for and award badges based on current achievements
+  const checkAndAwardBadges = async (currentAchievements) => {
+    if (!user || !currentAchievements) return;
+    
+    let badgesToAward = [];
+    let currentBadges = currentAchievements.badges || [];
+    
+    // Helper to check if user already has a badge
+    const hasBadge = (badgeId) => 
+      Array.isArray(currentBadges) && 
+      currentBadges.includes(badgeId);
+    
+    // First Step badge - always awarded on first login
+    if (!hasBadge("first_step")) {
+      badgesToAward.push("first_step");
+    }
+    
+    // Daily Streaker - awarded for 7 consecutive days
+    if (!hasBadge("daily_streaker") && currentAchievements.streak >= 7) {
+      badgesToAward.push("daily_streaker");
+    }
+    
+    // Consistency Champ - awarded for 30 consecutive days
+    if (!hasBadge("consistency_champ") && currentAchievements.streak >= 30) {
+      badgesToAward.push("consistency_champ");
+    }
+    
+    // Legacy Keeper - awarded for 365 consecutive days
+    if (!hasBadge("legacy_keeper") && currentAchievements.streak >= 365) {
+      badgesToAward.push("legacy_keeper");
+    }
+    
+    // If we have badges to award, update the database
+    if (badgesToAward.length > 0) {
+      console.log("Awarding new badges:", badgesToAward);
+      
+      // Make sure currentBadges is always an array
+      if (!Array.isArray(currentBadges)) {
+        currentBadges = [];
+      }
+      
+      // Add to current badges
+      const newBadges = [...currentBadges, ...badgesToAward];
+      
+      // Update in database
+      const { error } = await supabase
+        .from("Achievements")
+        .update({ badges: newBadges })
+        .eq("userid", user.id);
+        
+      if (error) {
+        console.error("Error updating badges:", error);
+        return;
+      }
+      
+      // Update local state
+      setAchievementData({
+        ...currentAchievements,
+        badges: newBadges
+      });
+      
+      // Show toast for each new badge
+      badgesToAward.forEach(badgeId => {
+        const badge = badgeDefinitions.find(b => b.id === badgeId);
+        if (badge) {
+          toast.success(`🏆 New Badge: ${badge.name}!`);
+        }
+      });
+    }
+  };
   
   useEffect(() => {
     // Only run once when user is available and streak hasn't been checked yet
@@ -113,14 +192,22 @@ export default function GamificationPage() {
         }
         
         // Update local state
-        setAchievementData({
+        const updatedData = {
           ...data,
           streak: newStreak,
           logdate: new Date().toISOString()
-        });
+        };
+        
+        setAchievementData(updatedData);
+        
+        // Check if user earned streak-based badges
+        checkAndAwardBadges(updatedData);
       } else {
         // Just set the data without updating
         setAchievementData(data);
+        
+        // Still check for badges they might have earned but not received
+        checkAndAwardBadges(data);
       }
       
     } catch (err) {
@@ -158,7 +245,7 @@ export default function GamificationPage() {
         const achievementRecord = {
           userid: user.id,
           points: 0,
-          badges: ["First Steps"],
+          badges: ["first_step"], // Start with First Step badge automatically
           streak: 1,  // Start with streak of 1 for first visit
           logdate: new Date().toISOString()  // Initialize with current date
         };
@@ -218,10 +305,14 @@ export default function GamificationPage() {
           console.log("Successfully created achievement record:", newData);
           setAchievementData(newData);
           toast.success("Welcome to your achievement tracker! Your streak starts today.");
+          toast.success("🏆 New Badge: First Step! You've logged in for the first time.");
         }
       } else {
         console.log("Using existing achievement data");
         setAchievementData(data[0]);
+        
+        // Check for badges they may have earned but not received yet
+        checkAndAwardBadges(data[0]);
       }
     } catch (err) {
       console.error("Unexpected error:", err);
@@ -301,11 +392,13 @@ export default function GamificationPage() {
       }
       
       // Update local state with logdate instead of last_activity
-      setAchievementData({
+      const updatedData = {
         ...data,
         streak: newStreak,
         logdate: new Date().toISOString()
-      });
+      };
+      
+      setAchievementData(updatedData);
       
       if (diffDays === 1) {
         toast.success(`Streak increased to ${newStreak}! 🔥`);
@@ -314,6 +407,9 @@ export default function GamificationPage() {
       } else {
         toast.info(`Welcome back! New streak started.`);
       }
+      
+      // Check for badges after updating streak
+      checkAndAwardBadges(updatedData);
       
     } catch (err) {
       console.error("Error updating streak:", err);
@@ -356,21 +452,29 @@ export default function GamificationPage() {
           <p className="text-3xl font-bold mt-2 text-white">{achievementData?.points || 0}</p>
         </div>
 
-        {/* Badges Section */}
+        {/* Badges Section - Updated to show earned/unearned status */}
         <div className="bg-gray-700 p-6 rounded-2xl shadow-lg mb-6">
           <h2 className="text-xl font-semibold text-white opacity-90 mb-4">Your Badges</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {badges.map((badge) => (
-              <div
-                key={badge}
-                className="bg-gray-600 p-4 rounded-xl border border-gray-500 hover:bg-gray-500 transition"
-              >
-                <div className="w-16 h-16 bg-gray-500 rounded-full mx-auto mb-2">
-                  <img src="/badge.png" alt="badge" className="w-full h-full object-cover rounded-full" />
+            {badgeDefinitions.map((badge) => {
+              const earned = achievementData?.badges?.includes(badge.id);
+              return (
+                <div
+                  key={badge.id}
+                  className={`${earned ? 'bg-gray-600' : 'bg-gray-800'} p-4 rounded-xl border ${earned ? 'border-[#4B7EFF]' : 'border-gray-700'} hover:bg-gray-700 transition`}
+                >
+                  <div className={`w-16 h-16 ${earned ? 'bg-[#4B7EFF]' : 'bg-gray-700'} rounded-full mx-auto mb-2 flex items-center justify-center`}>
+                    {earned ? (
+                      <span className="text-2xl">🏆</span>
+                    ) : (
+                      <span className="text-2xl opacity-30">🔒</span>
+                    )}
+                  </div>
+                  <p className="text-center text-sm font-medium mb-1 text-white">{badge.name}</p>
+                  <p className="text-center text-xs text-gray-400">{badge.description}</p>
                 </div>
-                <p className="text-center text-sm text-gray-400">{badge}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -391,3 +495,52 @@ export default function GamificationPage() {
     </div>
   );
 }
+
+// Function to be exported and used in other pages to award badges
+export const awardBadgeForAction = async (userId, badgeId) => {
+  if (!userId || !badgeId) return false;
+  
+  try {
+    // Get current achievements
+    const { data, error } = await supabase
+      .from("Achievements")
+      .select("*")
+      .eq("userid", userId)
+      .single();
+      
+    if (error || !data) {
+      console.error("Error fetching achievements for badge award:", error);
+      return false;
+    }
+    
+    const currentBadges = Array.isArray(data.badges) ? data.badges : [];
+    
+    // If user already has this badge, do nothing
+    if (currentBadges.includes(badgeId)) {
+      return true; // Already has badge
+    }
+    
+    // Add the badge
+    const newBadges = [...currentBadges, badgeId];
+    
+    // Update the database
+    const { error: updateError } = await supabase
+      .from("Achievements")
+      .update({ badges: newBadges })
+      .eq("userid", userId);
+      
+    if (updateError) {
+      console.error("Error updating badges:", updateError);
+      return false;
+    }
+    
+    // Find badge details for potential toast
+    const badge = badgeDefinitions.find(b => b.id === badgeId);
+    console.log(`🏆 Badge awarded: ${badge?.name || badgeId}`);
+    
+    return true;
+  } catch (err) {
+    console.error("Error awarding badge:", err);
+    return false;
+  }
+};
