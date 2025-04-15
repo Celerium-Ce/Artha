@@ -1,5 +1,8 @@
-'use client';
+"use client"
 
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import { useAuth } from '@/context/useAuth';
 import TransactionForm from './TransactionForm';
 import TransactionList from './TransactionList';
 import { awardBadgeForAction } from '../gamification/page';
@@ -14,8 +17,8 @@ export default function TransactionsPage() {
     <div
       className="min-h-screen p-6"
       style={{
-        backgroundColor: 'var(--background)', // Reference to the global background variable
-        color: 'var(--foreground)', // Reference to the global foreground variable
+        backgroundColor: 'var(--background)',
+        color: 'var(--foreground)',
       }}
     >
       <div className="max-w-4xl mx-auto space-y-8">
