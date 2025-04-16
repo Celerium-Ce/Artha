@@ -20,250 +20,424 @@ import {
 
 ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale, LinearScale, BarElement);
 
-// Add a direct implementation to award the badge
-const awardInsightBadge = async (userId) => {
-  try {
-    // Get current achievements
-    const { data, error } = await supabase
-      .from("Achievements")
-      .select("badges, points")
-      .eq("userid", userId)
-      .single();
-      
-    if (error) {
-      console.error("Error fetching achievements:", error);
-      return;
-    }
-    
-    // If no achievements record found
-    if (!data) {
-      console.log("No achievements record found");
-      return;
-    }
-    
-    // Check if user already has the badge
-    const currentBadges = Array.isArray(data.badges) ? data.badges : [];
-    if (currentBadges.includes("insight_seeker")) {
-      return; // Already has badge
-    }
-    
-    // Add the badge and points
-    const newBadges = [...currentBadges, "insight_seeker"];
-    const currentPoints = data.points || 0;
-    const newPoints = currentPoints + 60; // Insight Seeker badge is worth 60 points
-    
-    // Update the database
-    const { error: updateError } = await supabase
-      .from("Achievements")
-      .update({ 
-        badges: newBadges,
-        points: newPoints
-      })
-      .eq("userid", userId);
-      
-    if (updateError) {
-      console.error("Error updating badges and points:", updateError);
-      return;
-    }
-    
-    toast.success("🏆 New Badge: Insight Seeker! +60 points");
-    console.log("Insight badge awarded with 60 points");
-    
-  } catch (err) {
-    console.error("Error awarding insight badge:", err);
+const getMonthRange = (date) => {
+  const startDate = new Date(date);
+  startDate.setDate(1);
+  startDate.setHours(0, 0, 0, 0);
+  
+  const endDate = new Date(date);
+  endDate.setMonth(endDate.getMonth() + 1);
+  endDate.setDate(0);
+  endDate.setHours(23, 59, 59, 999);
+  
+  return {
+    start: startDate.toISOString(),
+    end: endDate.toISOString(),
+    label: startDate.toLocaleString('default', { month: 'long', year: 'numeric' })
+  };
+};
+
+const getLastThreeMonths = () => {
+  const months = [];
+  const currentDate = new Date();
+  
+  for (let i = 0; i < 3; i++) {
+    const date = new Date(currentDate);
+    date.setMonth(currentDate.getMonth() - i);
+    months.push(getMonthRange(date));
   }
+  
+  return months;
 };
 
 const ReportsPage = () => {
   const { user, loading } = useAuth();
-  const transactions = [
-    { id: 1, type: "income", category: "Food", amount: 50, date: "2025-01-01" },
-    { id: 2, type: "spending", category: "Food", amount: 30, date: "2025-01-01" },
-    { id: 3, type: "income", category: "Rent", amount: 1000, date: "2025-01-02" },
-    { id: 4, type: "spending", category: "Rent", amount: 1200, date: "2025-01-02" },
-    { id: 5, type: "income", category: "Salary", amount: 2000, date: "2025-01-05" },
-    { id: 6, type: "spending", category: "Utilities", amount: 150, date: "2025-01-06" },
-  ];
-
   const [selectedChart, setSelectedChart] = useState("categoryPie");
   const [monthlyData, setMonthlyData] = useState({});
   const [yearlyData, setYearlyData] = useState({});
-  const [hasMounted, setHasMounted] = useState(false); // for hydration fix
-  const [hasAwardedBadge, setHasAwardedBadge] = useState(false);
+  const [categoryData, setCategoryData] = useState({ income: {}, spending: {} });
+  const [transactions, setTransactions] = useState([]);
+  const [availableMonths, setAvailableMonths] = useState(getLastThreeMonths());
+  const [selectedMonth, setSelectedMonth] = useState(availableMonths[0]?.start || '');
+  const [reportDetails, setReportDetails] = useState(null);
+
+  // Update the createMonthlyReport function
+  const createMonthlyReport = async (accountId, monthDate) => {
+    const range = getMonthRange(new Date(monthDate));
+    const formattedStartDate = range.start.split('T')[0];
+    const formattedEndDate = range.end.split('T')[0];
+  
+    try {
+      // First check if report exists for this month
+      const { data: existingReport, error: checkError } = await supabase
+        .from('Report')
+        .select('*')
+        .eq('accountid', accountId)
+        .eq('startdate', formattedStartDate)
+        .maybeSingle();
+  
+      if (checkError) throw checkError;
+      if (existingReport) {
+        // Update existing report instead of creating new one
+        const { data: updatedReport, error: updateError } = await supabase
+          .from('Report')
+          .update({
+            endbalance: existingReport.endbalance,
+            numoftxn: existingReport.numoftxn,
+            income: existingReport.income,
+            expense: existingReport.expense
+          })
+          .match({ accountid: accountId, startdate: formattedStartDate })
+          .select()
+          .single();
+  
+        if (updateError) throw updateError;
+        return updatedReport;
+      }
+  
+      // If no report exists, get transactions for the month
+      const { data: txns, error: txnError } = await supabase
+        .from('Transaction')
+        .select('amount, credit_debit')
+        .eq('accountid', accountId)
+        .gte('transactionwhen', range.start)
+        .lte('transactionwhen', range.end);
+  
+      if (txnError) throw txnError;
+  
+      // Calculate totals
+      const totals = txns.reduce((acc, txn) => {
+        if (txn.credit_debit === 'credit') {
+          acc.income += txn.amount;
+        } else {
+          acc.expense += txn.amount;
+        }
+        return acc;
+      }, { income: 0, expense: 0 });
+  
+      // Get current balance
+      const { data: account, error: accountError } = await supabase
+        .from('Account')
+        .select('balance')
+        .eq('accountid', accountId)
+        .single();
+  
+      if (accountError) throw accountError;
+  
+      // Create new report using insert
+      const { data: newReport, error: createError } = await supabase
+        .from('Report')
+        .insert({
+          accountid: accountId,
+          startdate: formattedStartDate,
+          enddate: formattedEndDate,
+          income: totals.income,
+          expense: totals.expense,
+          endbalance: account.balance,
+          numoftxn: txns.length
+        })
+        .select()
+        .single();
+  
+      if (createError) throw createError;
+      return newReport;
+  
+    } catch (error) {
+      console.error('Error in report creation:', error);
+      toast.error('Error creating report: ' + error.message);
+      return null;
+    }
+  };
+
+  const fetchReportData = async () => {
+    if (!user || !selectedMonth) return;
+  
+    try {
+      const { data: account, error: accountError } = await supabase
+        .from('Account')
+        .select('accountid')
+        .eq('userid', user.id)
+        .single();
+  
+      if (accountError) throw accountError;
+  
+      const range = getMonthRange(new Date(selectedMonth));
+      const formattedStartDate = range.start.split('T')[0];
+      
+      // First check if report exists
+      let report;
+      const { data: existingReport, error: checkError } = await supabase
+        .from('Report')
+        .select('*')
+        .eq('accountid', account.accountid)
+        .eq('startdate', formattedStartDate)
+        .single();
+  
+      // Get all transactions for the month
+      const { data: txns, error: txnError } = await supabase
+        .from('Transaction')
+        .select(`
+          amount,
+          credit_debit,
+          transactionwhen,
+          Category (catname)
+        `)
+        .eq('accountid', account.accountid)
+        .gte('transactionwhen', range.start)
+        .lte('transactionwhen', range.end);
+  
+      if (txnError) throw txnError;
+  
+      // Calculate totals
+      const totals = txns?.reduce((acc, txn) => {
+        if (txn.credit_debit === 'credit') {
+          acc.income += txn.amount;
+        } else {
+          acc.expense += txn.amount;
+        }
+        return acc;
+      }, { income: 0, expense: 0 });
+  
+      // Get current balance
+      const { data: accountData } = await supabase
+        .from('Account')
+        .select('balance')
+        .eq('accountid', account.accountid)
+        .single();
+  
+      if (existingReport) {
+        // Update existing report
+        const { data: updatedReport, error: updateError } = await supabase
+          .from('Report')
+          .update({
+            income: totals.income,
+            expense: totals.expense,
+            endbalance: accountData.balance,
+            numoftxn: txns.length
+          })
+          .match({ 
+            accountid: account.accountid,
+            startdate: formattedStartDate
+          })
+          .select()
+          .single();
+  
+        if (updateError) throw updateError;
+        report = updatedReport;
+      } else {
+        // Create new report only if it doesn't exist
+        const { data: newReport, error: createError } = await supabase
+          .from('Report')
+          .insert({
+            accountid: account.accountid,
+            startdate: formattedStartDate,
+            enddate: range.end.split('T')[0],
+            income: totals.income,
+            expense: totals.expense,
+            endbalance: accountData.balance,
+            numoftxn: txns.length
+          })
+          .select()
+          .single();
+  
+        if (createError) throw createError;
+        report = newReport;
+      }
+  
+      // Update UI with fresh data
+      const catStats = { income: {}, spending: {} };
+      txns?.forEach(txn => {
+        const category = txn.Category.catname;
+        const type = txn.credit_debit === 'credit' ? 'income' : 'spending';
+        catStats[type][category] = (catStats[type][category] || 0) + txn.amount;
+      });
+  
+      setCategoryData(catStats);
+      setTransactions(txns || []);
+      setReportDetails({
+        startDate: report.startdate,
+        endDate: report.enddate,
+        income: report.income,
+        expense: report.expense,
+        balance: report.endbalance,
+        transactions: report.numoftxn
+      });
+  
+    } catch (error) {
+      console.error('Error fetching report data:', error);
+      toast.error('Error updating report: ' + error.message);
+    }
+  };
 
   useEffect(() => {
-    setHasMounted(true);
-    
-    const initializeReports = async () => {
-      const calculateTrends = () => {
-        const monthly = { January: 500, February: 600 };
-        const yearly = { 2025: 5000 };
-        setMonthlyData(monthly);
-        setYearlyData(yearly);
-      };
-      calculateTrends();
-      
-      // Award the badge when the page loads if user is logged in
-      if (user && !hasAwardedBadge) {
-        await awardInsightBadge(user.id);
-        setHasAwardedBadge(true);
-      }
-    };
-    
-    if (user) {
-      initializeReports();
-    }
-  }, [user, hasAwardedBadge]);
+    if (user && !loading) {
+      fetchReportData();
 
-  const categoryData = {
-    income: { Food: 100, Rent: 1000, Salary: 2000 },
-    spending: { Food: 30, Rent: 1200, Utilities: 150 },
-  };
+      // Set up real-time subscription for transactions
+      const channel = supabase
+        .channel('report-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'Transaction',
+            filter: `accountid=eq.${user.id}`
+          },
+          async (payload) => {
+            console.log('Transaction changed:', payload);
+            // Refresh report data when transactions change
+            await fetchReportData();
+          }
+        )
+        .subscribe();
+
+      // Cleanup subscription
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [user, loading, selectedMonth]);
+
+  
+
 
   const pieChartData = (type) => ({
     labels: Object.keys(categoryData[type]),
-    datasets: [
-      {
-        data: Object.values(categoryData[type]),
-        backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"],
-        hoverOffset: 4,
-      },
-    ],
+    datasets: [{
+      data: Object.values(categoryData[type]),
+      backgroundColor: [
+        "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0",
+        "#9966FF", "#FF9F40", "#FF99CC", "#00CC99"
+      ],
+      hoverOffset: 4
+    }]
   });
 
-  const barChartData = {
-    labels: ["Income", "Spending"],
-    datasets: [
-      {
-        label: "Amount",
-        data: [2000, 1380],
-        backgroundColor: ["#36A2EB", "#FF6384"],
-      },
-    ],
-  };
-
-  if (loading) return <p className="text-center p-6">Loading...</p>;
-  if (!user) return <p className="text-center p-6">Please log in to view reports.</p>;
+  if (loading) return <div className="text-center p-6">Loading...</div>;
+  if (!user) return <div className="text-center p-6">Please log in to view reports.</div>;
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold text-[#4B7EFF] opacity-90 mb-6 pt-6 text-center">Reports and Insights</h1>
+      <h1 className="text-3xl font-semibold text-[#4B7EFF] opacity-90 mb-6 pt-6 text-center">
+        Monthly Reports
+      </h1>
 
       <div className="p-6 bg-gray-800 text-gray-200 rounded-2xl shadow-lg max-w-4xl mx-auto">
         <div className="mb-6">
-          <label className="text-sm font-medium text-gray-400 mr-4">Select Chart Type:</label>
+          <label className="text-sm font-medium text-gray-400 mr-4">
+            Select Month:
+          </label>
           <select
-            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
-            value={selectedChart}
-            onChange={(e) => setSelectedChart(e.target.value)}
+            className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
           >
-            <option value="categoryPie">Category-wise Spending (Pie Chart)</option>
-            <option value="incomeSpendingBar">Income vs Spending (Bar Chart)</option>
-            <option value="monthlyTrends">Monthly Spending Trends</option>
-            <option value="yearlyTrends">Yearly Spending Trends</option>
+            {availableMonths.map(month => (
+              <option key={month.start} value={month.start}>
+                {month.label}
+              </option>
+            ))}
           </select>
         </div>
 
-        <div className="space-y-10">
-          {selectedChart === "categoryPie" && (
-            <div>
-              <h2 className="text-xl font-semibold text-white mb-4">Category-wise Income</h2>
-              <div className="h-64">
-                <Pie data={pieChartData("income")} options={{ responsive: true, maintainAspectRatio: false }} />
+        {reportDetails && (
+          <div className="bg-gray-700 p-6 rounded-xl mb-6">
+            <h2 className="text-xl font-semibold text-white mb-4">Monthly Summary</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-gray-600 p-4 rounded-lg">
+                <p className="text-gray-400">Period</p>
+                <p className="text-lg">
+                  {new Date(reportDetails.startDate).toLocaleDateString()} - 
+                  {new Date(reportDetails.endDate).toLocaleDateString()}
+                </p>
               </div>
-              <h2 className="text-xl font-semibold text-white mt-8 mb-4">Category-wise Spending</h2>
-              <div className="h-64">
-                <Pie data={pieChartData("spending")} options={{ responsive: true, maintainAspectRatio: false }} />
+              <div className="bg-gray-600 p-4 rounded-lg">
+                <p className="text-gray-400">Total Transactions</p>
+                <p className="text-lg">{reportDetails.transactions}</p>
+              </div>
+              <div className="bg-gray-600 p-4 rounded-lg">
+                <p className="text-gray-400">End Balance</p>
+                <p className="text-lg">₹{reportDetails.balance.toLocaleString()}</p>
+              </div>
+              <div className="bg-gray-600 p-4 rounded-lg">
+                <p className="text-gray-400">Total Income</p>
+                <p className="text-lg text-green-400">₹{reportDetails.income.toLocaleString()}</p>
+              </div>
+              <div className="bg-gray-600 p-4 rounded-lg">
+                <p className="text-gray-400">Total Expense</p>
+                <p className="text-lg text-red-400">₹{reportDetails.expense.toLocaleString()}</p>
+              </div>
+              <div className="bg-gray-600 p-4 rounded-lg">
+                <p className="text-gray-400">Net Flow</p>
+                <p className={`text-lg ${
+                  reportDetails.income - reportDetails.expense >= 0 
+                    ? 'text-green-400' 
+                    : 'text-red-400'
+                }`}>
+                  ₹{(reportDetails.income - reportDetails.expense).toLocaleString()}
+                </p>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {selectedChart === "incomeSpendingBar" && (
-            <div>
-              <h2 className="text-xl font-semibold text-[#4B7EFF] mb-4">Income vs Spending Comparison</h2>
-              <div className="h-64">
-                <Bar data={barChartData} options={{ responsive: true, maintainAspectRatio: false }} />
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-xl font-semibold text-white mb-4">Category Analysis</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <h3 className="text-lg font-medium mb-2">Income Categories</h3>
+                <div className="h-64">
+                  <Pie 
+                    data={pieChartData("income")} 
+                    options={{ responsive: true, maintainAspectRatio: false }}
+                  />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-medium mb-2">Expense Categories</h3>
+                <div className="h-64">
+                  <Pie 
+                    data={pieChartData("spending")} 
+                    options={{ responsive: true, maintainAspectRatio: false }}
+                  />
+                </div>
               </div>
             </div>
-          )}
-
-          {selectedChart === "monthlyTrends" && (
-            <div>
-              <h2 className="text-xl font-semibold text-[#4B7EFF] mb-4">Monthly Spending Trends</h2>
-              <div className="h-64">
-                <Bar
-                  data={{
-                    labels: Object.keys(monthlyData),
-                    datasets: [
-                      {
-                        label: "Amount",
-                        data: Object.values(monthlyData),
-                        backgroundColor: "#FF6384",
-                      },
-                    ],
-                  }}
-                  options={{ responsive: true, maintainAspectRatio: false }}
-                />
-              </div>
-            </div>
-          )}
-
-          {selectedChart === "yearlyTrends" && (
-            <div>
-              <h2 className="text-xl font-semibold text-[#4B7EFF] mb-4">Yearly Spending Trends</h2>
-              <div className="h-64">
-                <Bar
-                  data={{
-                    labels: Object.keys(yearlyData),
-                    datasets: [
-                      {
-                        label: "Amount",
-                        data: Object.values(yearlyData),
-                        backgroundColor: "#36A2EB",
-                      },
-                    ],
-                  }}
-                  options={{ responsive: true, maintainAspectRatio: false }}
-                />
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 mt-10">
-          {hasMounted && (
-            <CSVLink
-              data={transactions}
-              headers={[
-                { label: "ID", key: "id" },
-                { label: "Type", key: "type" },
-                { label: "Category", key: "category" },
-                { label: "Amount", key: "amount" },
-                { label: "Date", key: "date" },
-              ]}
-              filename="transactions_report.csv"
-            >
-              <button className="px-4 py-2 bg-[#4B7EFF] text-white rounded-xl hover:bg-[#4B7EFF] transition">
-                Export to CSV
-              </button>
-            </CSVLink>
-          )}
+        <div className="flex flex-wrap gap-4 mt-8">
+          <CSVLink
+            data={transactions.map(txn => ({
+              type: txn.credit_debit,
+              category: txn.Category.catname,
+              amount: txn.amount,
+              date: new Date(txn.transactionwhen).toLocaleDateString()
+            }))}
+            filename={`report_${selectedMonth.split('T')[0]}.csv`}
+            className="px-4 py-2 bg-[#4B7EFF] text-white rounded-xl hover:bg-[#4B7EFF] transition"
+          >
+            Export to CSV
+          </CSVLink>
 
           <button
             onClick={() => {
               const doc = new jsPDF();
-              doc.text("Transactions Report", 20, 20);
+              doc.text(`Monthly Report - ${new Date(selectedMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`, 20, 20);
+              
               autoTable(doc, {
-                head: [["ID", "Type", "Category", "Amount", "Date"]],
-                body: transactions.map((txn) => [
-                  txn.id,
-                  txn.type,
-                  txn.category,
-                  txn.amount,
-                  txn.date,
-                ]),
+                head: [["Type", "Category", "Amount", "Date"]],
+                body: transactions.map(txn => [
+                  txn.credit_debit,
+                  txn.Category.catname,
+                  `₹${txn.amount.toLocaleString()}`,
+                  new Date(txn.transactionwhen).toLocaleDateString()
+                ])
               });
-              doc.save("transactions_report.pdf");
+              
+              doc.save(`report_${selectedMonth.split('T')[0]}.pdf`);
             }}
             className="px-4 py-2 bg-[#4B7EFF] text-white rounded-xl hover:bg-[#4B7EFF] transition"
           >
