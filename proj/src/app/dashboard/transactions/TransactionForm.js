@@ -2,18 +2,29 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
+import { toast } from 'react-toastify';
 
-const accountid = 12; // Assuming the account ID is static for now
-
-export default function TransactionForm({ fetchTransactions }) {
+export default function TransactionForm({ accountId, onSuccess, user }) {
+  // Form states
   const [category, setCategory] = useState('');
   const [categories, setCategories] = useState([]);
   const [amount, setAmount] = useState('');
   const [transactionType, setTransactionType] = useState('credit');
-  const [timestamp, setTimestamp] = useState('');
+  const [date, setDate] = useState('');
 
+  // Load categories on component mount
   useEffect(() => {
-    const fetchCategories = async () => {
+    fetchCategories();
+    
+    // Set default date to today
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0];
+    setDate(formattedDate);
+  }, []);
+
+  // Fetch categories from database
+  const fetchCategories = async () => {
+    try {
       const { data, error } = await supabase
         .from('Category')
         .select('catid, catname')
@@ -21,47 +32,95 @@ export default function TransactionForm({ fetchTransactions }) {
 
       if (error) {
         console.error('Error fetching categories:', error.message);
+        toast.error('Failed to load categories');
       } else {
-        setCategories(data);
+        console.log('Categories loaded:', data);
+        setCategories(data || []);
       }
-    };
+    } catch (err) {
+      console.error('Exception fetching categories:', err);
+    }
+  };
 
-    fetchCategories();
-  }, []);
-
+  // Handle submitting the transaction form
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!category || !amount || !transactionType || !timestamp) return;
-
-    const parsedAmount = parseFloat(amount);
-    const parsedTimestamp = new Date(timestamp).toISOString();
-    const castedTransactionType = transactionType === 'credit' ? 'credit' : 'debit';
-
-    const selectedCategory = categories.find((c) => c.catname === category);
-    if (!selectedCategory) {
-      alert('Invalid category selected.');
+    
+    // Basic validation
+    if (!accountId) {
+      toast.error('No account found. Please refresh the page.');
+      return;
+    }
+    
+    if (!category || !amount) {
+      toast.error('Please fill in all required fields');
       return;
     }
 
-    const { error: insertError } = await supabase
-      .from('Transaction')
-      .insert([{
-        accountid: accountid,
-        amount: parsedAmount,
-        transactionWhen: parsedTimestamp,
-        catid: selectedCategory.catid,
-        credit_debit: castedTransactionType,
-      }]);
+    // Validate amount is positive
+    if (parseInt(amount, 10) <= 0) {
+      toast.error('Amount must be greater than 0');
+      return;
+    }
 
-    if (insertError) {
-      console.error('Failed to add transaction:', insertError.message);
-      alert('Failed to save transaction. Please try again.');
-    } else {
-      await fetchTransactions();
-      setCategory('');
+    try {
+      console.log('Submitting transaction form with values:', {
+        accountId,
+        amount,
+        type: transactionType,
+        category,
+        date
+      });
+      
+      // Find selected category ID
+      const selectedCategory = categories.find(cat => cat.catname === category);
+      if (!selectedCategory) {
+        toast.error('Please select a valid category');
+        return;
+      }
+
+      // Format data for database insert
+      const transactionData = {
+        accountid: accountId,
+        amount: parseInt(amount, 10),
+        catid: selectedCategory.catid,
+        credit_debit: transactionType
+      };
+      
+      // Only add date if provided (otherwise use default)
+      if (date) {
+        transactionData.transactionwhen = new Date(date).toISOString();
+      }
+
+      console.log('Sending transaction data:', transactionData);
+
+      // Insert transaction
+      const { data, error } = await supabase
+        .from('Transaction')
+        .insert(transactionData);
+
+      if (error) {
+        console.error('Error adding transaction:', error);
+        toast.error('Failed to save transaction: ' + error.message);
+        return;
+      }
+
+      // Success!
+      console.log('Transaction added successfully');
+      toast.success('Transaction saved successfully');
+      
+      // Reset form
       setAmount('');
-      setTransactionType('credit');
-      setTimestamp('');
+      setCategory('');
+      
+      // Notify parent component to refresh data
+      if (onSuccess) {
+        onSuccess(amount, transactionType);
+      }
+      
+    } catch (err) {
+      console.error('Exception submitting transaction:', err);
+      toast.error('An unexpected error occurred');
     }
   };
 
@@ -70,7 +129,9 @@ export default function TransactionForm({ fetchTransactions }) {
       <h2 className="text-3xl font-semibold text-[#4B7EFF] opacity-90 mb-4">
         Add Transaction
       </h2>
+      
       <div className="space-y-4">
+        {/* Transaction Type */}
         <div className="flex flex-col">
           <label className="text-sm font-medium text-gray-400">Transaction Type</label>
           <select
@@ -79,11 +140,12 @@ export default function TransactionForm({ fetchTransactions }) {
             className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
             required
           >
-            <option value="credit">Credit</option>
-            <option value="debit">Debit</option>
+            <option value="credit">Credit (Money In)</option>
+            <option value="debit">Debit (Money Out)</option>
           </select>
         </div>
 
+        {/* Simplified Category Selection */}
         <div className="flex flex-col">
           <label className="text-sm font-medium text-gray-400">Category</label>
           <select
@@ -101,32 +163,36 @@ export default function TransactionForm({ fetchTransactions }) {
           </select>
         </div>
 
+        {/* Amount */}
         <div className="flex flex-col">
           <label className="text-sm font-medium text-gray-400">Amount</label>
           <input
             type="number"
+            min="1"
+            step="1"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
-            placeholder="Transaction amount"
+            placeholder="Enter amount"
             required
           />
         </div>
 
+        {/* Date */}
         <div className="flex flex-col">
-          <label className="text-sm font-medium text-gray-400">Timestamp</label>
+          <label className="text-sm font-medium text-gray-400">Date (Optional)</label>
           <input
-            type="datetime-local"
-            value={timestamp}
-            onChange={(e) => setTimestamp(e.target.value)}
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
             className="bg-gray-700 border border-gray-500 text-gray-200 rounded-xl p-2 focus:ring-[#4B7EFF] focus:border-[#4B7EFF]"
-            required
           />
         </div>
 
+        {/* Submit Button */}
         <button
           type="submit"
-          className="mt-4 bg-[#4B7EFF] text-gray-900 rounded-xl py-2 px-4 w-full hover:bg-[#4B7EFF] transition-colors"
+          className="mt-4 w-full bg-[#4B7EFF] hover:bg-opacity-90 text-white font-bold py-2 px-4 rounded-xl transition-colors"
         >
           Save Transaction
         </button>
