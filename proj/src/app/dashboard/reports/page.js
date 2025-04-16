@@ -357,7 +357,7 @@ const ReportsPage = () => {
                 <p className="text-lg">{reportDetails.transactions}</p>
               </div>
               <div className="bg-gray-600 p-4 rounded-lg">
-                <p className="text-gray-400">End Balance</p>
+                <p className="text-gray-400">Current Balance</p>
                 <p className="text-lg">₹{reportDetails.balance.toLocaleString()}</p>
               </div>
               <div className="bg-gray-600 p-4 rounded-lg">
